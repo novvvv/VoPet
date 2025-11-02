@@ -1,0 +1,359 @@
+/* VoPet 팝업 스타일 */
+#vopet-translation-popup {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #333333;
+  min-width: 200px;
+  max-width: 300px;
+  animation: vopet-fadeIn 0.3s ease-out;
+  border: 1px solid #e9ecef;
+}
+
+@keyframes vopet-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.vopet-popup-content {
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.vopet-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.vopet-word {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333333;
+}
+
+.vopet-close-btn {
+  background: none;
+  border: none;
+  color: #666666;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.vopet-close-btn:hover {
+  background: #e9ecef;
+  color: #333333;
+}
+
+.vopet-popup-body {
+  padding: 16px;
+  min-height: 60px;
+}
+
+/* Footer 스타일 */
+.vopet-popup-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.vopet-save-btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: #007bff;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.vopet-save-btn:hover:not(:disabled) {
+  background: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.vopet-save-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 123, 255, 0.3);
+}
+
+.vopet-save-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.vopet-loading {
+  text-align: center;
+  color: #666666;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+}
+
+.vopet-loading::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e9ecef;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: vopet-spin 1s linear infinite;
+  margin-left: 8px;
+}
+
+@keyframes vopet-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.vopet-result {
+  text-align: center;
+}
+
+.vopet-translation {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333333;
+  line-height: 1.6;
+}
+
+/* 전체 번역 문장 스타일 */
+.vopet-translation-full {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #333333;
+  line-height: 1.6;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* 개별 단어 번역 영역 */
+.vopet-word-translations {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #555555;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 개별 단어 항목 */
+.vopet-word-item {
+  display: inline-block;
+  padding: 4px 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+  margin: 2px;
+  vertical-align: top;
+}
+
+.vopet-word-item:hover {
+  background: #e9ecef;
+  border-color: #dee2e6;
+}
+
+.vopet-word-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.vopet-word-original {
+  font-weight: 600;
+  color: #495057;
+  margin-right: 6px;
+  display: inline-block;
+}
+
+.vopet-word-separator {
+  color: #adb5bd;
+  margin: 0 4px;
+  font-size: 12px;
+}
+
+.vopet-word-translated {
+  color: #1976d2;
+  font-weight: 500;
+  display: inline-block;
+}
+
+/* 인라인 후리가나 (단어별 번역에서 사용) */
+.furigana-inline {
+  display: block;
+  color: #666666;
+  font-size: 10px;
+  font-style: italic;
+  margin-top: 2px;
+  padding: 1px 4px;
+  background: #f0f0f0;
+  border-radius: 3px;
+  text-align: center;
+}
+
+/* 단어 세그먼트 스타일 (파파고 스타일) */
+.vopet-word-segment {
+  display: inline-block;
+  cursor: pointer;
+  padding: 2px 4px;
+  margin: 0 1px;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.vopet-word-segment:hover {
+  background: #e3f2fd;
+  color: #1976d2;
+  transform: translateY(-1px);
+}
+
+.vopet-word-segment:active {
+  background: #bbdefb;
+  transform: translateY(0);
+}
+
+.vopet-word-segment:focus {
+  outline: 2px solid #1976d2;
+  outline-offset: 2px;
+}
+
+/* 단어 번역 툴팁 스타일 */
+#vopet-word-tooltip {
+  background: #333333;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: vopet-tooltip-fadeIn 0.2s ease-out;
+  pointer-events: none;
+  max-width: 200px;
+  word-wrap: break-word;
+}
+
+.vopet-tooltip-content {
+  text-align: center;
+  font-weight: 500;
+}
+
+@keyframes vopet-tooltip-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 툴팁 화살표 (선택사항) */
+#vopet-word-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #333333;
+}
+
+.vopet-click-hint {
+  font-size: 12px;
+  color: #666666;
+  font-style: italic;
+}
+
+.vopet-error {
+  color: #ff6b6b;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* 후리가나 스타일 */
+.furigana {
+  display: block;
+  color: #666666;
+  font-size: 12px;
+  font-style: italic;
+  margin-top: 4px;
+  padding: 2px 6px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.vopet-translation .furigana {
+  margin-top: 6px;
+  text-align: center;
+}
+
+/* 팝업이 화면 밖으로 나가지 않도록 조정 */
+#vopet-translation-popup {
+  position: fixed !important;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 400px) {
+  #vopet-translation-popup {
+    max-width: 250px;
+    min-width: 180px;
+  }
+  
+  .vopet-popup-header {
+    padding: 10px 12px;
+  }
+  
+  .vopet-popup-body {
+    padding: 12px;
+  }
+  
+  .vopet-word {
+    font-size: 14px;
+  }
+  
+  .vopet-translation {
+    font-size: 16px;
+  }
+}

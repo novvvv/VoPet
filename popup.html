@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 350px;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: #ffffff;
+      color: #333333;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 300;
+    }
+    
+    .header p {
+      margin: 5px 0 0 0;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    
+    .settings {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .setting-item {
+      margin-bottom: 15px;
+    }
+    
+    .setting-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .setting-item label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .setting-item select,
+    .setting-item input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #333;
+      font-size: 14px;
+    }
+    
+    .setting-item select:focus,
+    .setting-item input:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+    
+    .status {
+      text-align: center;
+      padding: 10px;
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    
+    .status.active {
+      background: #d4edda;
+      border-color: #c3e6cb;
+      color: #155724;
+    }
+    
+    .instructions {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
+      padding: 15px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    
+    .instructions h3 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+    }
+    
+    .instructions ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    
+    .instructions li {
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🐾 VoPet</h1>
+    <p>단어 해석기</p>
+  </div>
+  
+  <div class="settings">
+    <div class="setting-item">
+      <label for="language">해석 언어:</label>
+      <select id="language">
+        <option value="ko">한국어</option>
+        <option value="en">English</option>
+        <option value="ja">日本語</option>
+        <option value="zh">中文</option>
+      </select>
+    </div>
+    
+    <div class="setting-item">
+      <label for="translatorService">번역 서비스:</label>
+      <select id="translatorService">
+        <option value="google-free">Google Translate (무료, API 키 불필요) ⭐</option>
+        <option value="deepl">DeepL (API 키 필요, 월 50만 자 무료)</option>
+        <option value="google">Google Translate (유료, API 키 필요)</option>
+      </select>
+    </div>
+    
+    <div class="setting-item">
+      <label for="apiKey">API 키:</label>
+      <input type="text" id="apiKey" placeholder="DeepL 또는 Google Translate API 키를 입력하세요">
+      <small style="display: block; margin-top: 5px; color: #666; font-size: 12px;">
+        <strong>참고:</strong> Google Translate (무료)는 API 키 불필요합니다.<br>
+        DeepL 사용 시: <a href="https://www.deepl.com/pro-api" target="_blank" style="color: #007bff;">무료 API 키 발급</a> 필요 (월 50만 자 무료)
+      </small>
+    </div>
+  </div>
+  
+  <div class="status" id="status">
+    활성화됨 - 단어를 드래그해보세요!
+  </div>
+  
+  <div class="instructions">
+    <h3>사용법:</h3>
+    <ul>
+      <li>웹페이지에서 단어를 드래그하세요</li>
+      <li>작은 팝업이 나타나 단어를 해석해드립니다</li>
+      <li>팝업을 클릭하면 더 자세한 정보를 볼 수 있습니다</li>
+    </ul>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

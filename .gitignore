@@ -1,0 +1,40 @@
+# Node modules (만약 나중에 npm을 사용한다면)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# 운영체제 파일
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE 파일
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 빌드 결과물
+dist/
+build/
+*.zip
+*.crx
+*.pem
+
+# 환경 변수 파일
+.env
+.env.local
+.env.*.local
+
+# 로그 파일
+*.log
+
+# 기타
+*.bak
+*.tmp
+
