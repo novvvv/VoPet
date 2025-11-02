@@ -283,7 +283,18 @@ function showTranslationPopup(event, text) {
     if (e.target.classList.contains('vopet-close-btn') || e.target.closest('.vopet-close-btn')) {
       return; // 닫기 버튼 클릭 시 아무것도 하지 않음
     }
-    window.detailWindow.open(text);
+    
+    // 현재 팝업에서 번역 정보 가져오기
+    const translationEl = popup.querySelector('.vopet-translation-full');
+    const translation = translationEl ? translationEl.textContent : '';
+    
+    // translationData 구성 - 전체 문장 클릭 시
+    const translationData = {
+      translation: translation || '',
+      examples: text || '' // 드래그한 전체 문장을 예문으로
+    };
+    
+    window.detailWindow.open(text, translationData);
   });
   
   // 단어 해석 요청
@@ -1010,7 +1021,7 @@ async function displayWordTranslations(resultDiv, words, targetLanguage, apiKey,
     // HTML 생성
     const wordItemsHTML = wordTranslationPairs
       .map(({ word, translation, furigana }) => {
-        return `<span class="vopet-word-item">
+        return `<span class="vopet-word-item" data-word="${escapeHtml(word)}" data-translation="${escapeHtml(translation)}" style="cursor: pointer;">
           <div class="vopet-word-content">
             <span class="vopet-word-original">${escapeHtml(word)}</span>
             <span class="vopet-word-separator">→</span>
@@ -1022,6 +1033,25 @@ async function displayWordTranslations(resultDiv, words, targetLanguage, apiKey,
       .join(' ');
     
     wordTranslationsDiv.innerHTML = wordItemsHTML;
+    
+    // 개별 단어 클릭 이벤트 추가
+    const wordItems = wordTranslationsDiv.querySelectorAll('.vopet-word-item');
+    wordItems.forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.stopPropagation(); // 팝업 클릭 이벤트 방지
+        
+        const clickedWord = this.dataset.word;
+        const clickedTranslation = this.dataset.translation;
+        
+        // translationData 구성 - 클릭한 단어만 표시
+        const translationData = {
+          translation: clickedTranslation || '',
+          examples: originalText || '' // 드래그한 전체 문장을 예문으로
+        };
+        
+        window.detailWindow.open(clickedWord, translationData);
+      });
+    });
     
   } catch (error) {
     console.error('단어별 번역 오류:', error);
