@@ -1,5 +1,20 @@
 // Background Service Worker - CORS 문제 해결을 위해 API 호출 처리
 
+// 설정 파일 로드 (없으면 기본값 사용)
+let API_URL = 'http://52.78.249.69/api/v1/words'; // 기본값
+
+// config.js가 있으면 로드 (Chrome Extension에서는 importScripts 사용)
+try {
+  importScripts('config.js');
+  if (typeof CONFIG !== 'undefined' && CONFIG.API_URL) {
+    API_URL = CONFIG.API_URL;
+    console.log('✅ Config 파일에서 API URL 로드:', API_URL);
+  }
+} catch (e) {
+  console.warn('⚠️ config.js를 찾을 수 없습니다. 기본값 사용:', API_URL);
+  console.warn('   config.example.js를 참고하여 config.js를 생성하세요.');
+}
+
 console.log('🐾 VoPet Background Script 로드됨!');
 
 // DeepL API 호출
@@ -108,6 +123,83 @@ async function translateWithGoogleAPI(text, targetLanguage, apiKey) {
   }
 }
 
+// 단어 저장 API 호출 함수
+async function saveWordToAPI(wordData) {
+  try {
+    console.log('단어 저장 API 호출:', wordData);
+    
+    // API_URL은 파일 상단에서 config.js로부터 로드됨
+    
+    // 임시 사용자 ID (나중에 OAuth로 대체)
+    const tempUserId = await new Promise((resolve) => {
+      chrome.storage.local.get(['tempUserId'], function(result) {
+        resolve(result.tempUserId || 'temp_user_' + Date.now());
+      });
+    });
+    
+    const requestBody = {
+      userId: tempUserId,
+      word: wordData.word,
+      translation: wordData.translation,
+      pronunciation: wordData.pronunciation,
+      example: wordData.examples  // DTO는 example (단수형)을 기대
+    };
+    
+    console.log('API 요청 URL:', API_URL);
+    console.log('API 요청 데이터:', requestBody);
+    console.log('API 요청 본문:', JSON.stringify(requestBody));
+    
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+    
+    console.log('API 응답 상태:', response.status, response.statusText);
+    console.log('API 응답 URL:', response.url);  // 리다이렉트 확인용
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('API 저장 성공:', data);
+      return { success: true, data: data };
+    } else {
+      const errorText = await response.text().catch(() => '');
+      let errorMessage = '알 수 없는 오류';
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.message || errorMessage;
+      } catch (e) {
+        // JSON 파싱 실패 시 텍스트 그대로 사용
+        errorMessage = errorText || '서버 오류';
+      }
+      
+      console.error('API 저장 실패:', response.status, errorMessage);
+      console.error('요청 URL:', API_URL);
+      console.error('응답 본문:', errorText);
+      console.error('응답 헤더:', [...response.headers.entries()]);
+      
+      // 404 에러에 대한 상세 정보 제공
+      if (response.status === 404) {
+        errorMessage = `API 엔드포인트를 찾을 수 없습니다. 서버가 실행 중인지 확인하세요.\n요청 URL: ${API_URL}`;
+      }
+      
+      return { 
+        success: false, 
+        error: `서버 오류 (${response.status}): ${errorMessage}` 
+      };
+    }
+  } catch (error) {
+    console.error('단어 저장 API 오류:', error);
+    if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+      return { success: false, error: '네트워크 오류: 서버에 연결할 수 없습니다.' };
+    }
+    return { success: false, error: error.message || '알 수 없는 오류' };
+  }
+}
+
 // Service Worker가 활성 상태로 유지되도록 ping 메시지 처리
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('Background Script 메시지 수신:', request.action);
@@ -146,6 +238,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse(result);
       } catch (error) {
         console.error('번역 오류:', error);
+        sendResponse({ success: false, error: error.message || '알 수 없는 오류' });
+      }
+    })();
+    
+    // 비동기 응답을 위해 true 반환
+    return true;
+  }
+  
+  if (request.action === 'saveWord') {
+    const { wordData } = request;
+    
+    console.log('단어 저장 요청:', wordData);
+    
+    // 비동기 처리
+    (async () => {
+      try {
+        const result = await saveWordToAPI(wordData);
+        console.log('단어 저장 결과:', result);
+        sendResponse(result);
+      } catch (error) {
+        console.error('단어 저장 오류:', error);
         sendResponse({ success: false, error: error.message || '알 수 없는 오류' });
       }
     })();

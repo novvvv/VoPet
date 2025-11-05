@@ -31,6 +31,9 @@ build/
 .env.local
 .env.*.local
 
+# 설정 파일 (서버 주소 등 민감 정보 포함)
+config.js
+
 # 로그 파일
 *.log
 
