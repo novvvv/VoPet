@@ -1,7 +1,7 @@
 // Background Service Worker - CORS 문제 해결을 위해 API 호출 처리
 
 // 설정 파일 로드 (없으면 기본값 사용)
-let API_URL = 'http://52.78.249.69/api/v1/words'; // 기본값
+let API_URL = 'http://52.78.249.69/api/words'; // 기본값
 
 // config.js가 있으면 로드 (Chrome Extension에서는 importScripts 사용)
 try {

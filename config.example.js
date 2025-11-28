@@ -3,8 +3,8 @@
 
 const CONFIG = {
   // API 서버 URL
-  // 로컬 테스트: http://localhost/api/v1/words
-  // EC2 배포: http://YOUR_SERVER_IP/api/v1/words
-  API_URL: 'http://YOUR_SERVER_IP/api/v1/words'
+  // 로컬 테스트: http://localhost/api/words
+  // EC2 배포: http://YOUR_SERVER_IP/api/words
+  API_URL: 'http://YOUR_SERVER_IP/api/words'
 };
 
