@@ -1,11 +1,87 @@
-// Content Script - 웹페이지에서 실행되는 스크립트
-let isActive = true;
-let currentPopup = null;
-let selectedText = '';
-let isDragging = false;
 
-// 강력한 디버깅과 실행 확인
-// console.log('🐾 VoPet Content Script 로드됨!');
+// -- [Variable] 변수 선언 -- //
+let isActive = true; // VoPet 활성화 상태 추적
+let currentPopup = null; // 현재 팝업 저장
+let selectedText = ''; // 선택된 텍스트 저장
+let isDragging = false; // 드래그 상태 추적
+let modifierKey = 'meta'; // 기본값: Cmd/Ctrl
+
+// 크롬 동기화 저장소에서 저장된 키(값) [modifierKey] 불러오기 
+// 비동기 콜백 방식 
+chrome.storage.sync.get(['modifierKey'], function(result) {
+  if (result.modifierKey) {
+    modifierKey = result.modifierKey;
+  }
+});
+
+// 키 변경 감지
+chrome.storage.onChanged.addListener(function(changes, areaName) {
+  if (areaName === 'sync' && changes.modifierKey) {
+    modifierKey = changes.modifierKey.newValue;
+  }
+});
+
+// 키 체크 함수 (키 조합 지원)
+function checkModifierKey(event) {
+  if (!modifierKey) {
+    return event.metaKey || event.ctrlKey; // 기본값
+  }
+  
+  // 키 조합인지 확인 (예: "meta+c", "alt+v")
+  if (modifierKey.includes('+')) {
+    const keys = modifierKey.split('+');
+    let allKeysPressed = true;
+    
+    // 각 키가 눌렸는지 확인
+    for (const key of keys) {
+      const trimmedKey = key.trim().toLowerCase();
+      
+      // Modifier 키 체크
+      if (trimmedKey === 'meta') {
+        if (!(event.metaKey || event.ctrlKey)) {
+          allKeysPressed = false;
+          break;
+        }
+      } else if (trimmedKey === 'alt') {
+        if (!event.altKey) {
+          allKeysPressed = false;
+          break;
+        }
+      } else if (trimmedKey === 'shift') {
+        if (!event.shiftKey) {
+          allKeysPressed = false;
+          break;
+        }
+      } else {
+        // 일반 키 체크
+        if (event.key.toLowerCase() !== trimmedKey) {
+          allKeysPressed = false;
+          break;
+        }
+      }
+    }
+    
+    return allKeysPressed;
+  }
+  
+  // 단일 키인 경우
+  const key = modifierKey.toLowerCase();
+  
+  // Modifier 키만
+  if (key === 'meta') {
+    return event.metaKey || event.ctrlKey;
+  }
+  if (key === 'alt') {
+    return event.altKey;
+  }
+  if (key === 'shift') {
+    return event.shiftKey;
+  }
+  
+  // 일반 키 (알파벳, 숫자 등)
+  return event.key.toLowerCase() === key;
+}
+
 
 // 페이지에 VoPet 로드 표시를 위한 강력한 방법
 const loadBanner = document.createElement('div');
@@ -49,8 +125,6 @@ window.vopetStatus = {
   version: '1.0'
 };
 
-// console.log('VoPet 상태:', window.vopetStatus);
-
 // Background Script 깨우기 - Service Worker가 비활성화되지 않도록 (강화)
 (function wakeUpBackgroundScript() {
   const wakeUp = () => {
@@ -64,15 +138,15 @@ window.vopetStatus = {
               console.warn('⚠️ Background Script 미로드 - 200ms 후 재시도...');
               setTimeout(wakeUp, 200);
             } else {
-              console.log('Background Script 깨우기 실패:', error);
+              // Background Script 깨우기 실패
             }
           } else {
-            console.log('✅ Background Script 활성화됨!', response);
+            // Background Script 활성화됨
           }
         });
       }
     } catch (error) {
-      console.log('Background Script 깨우기 오류:', error);
+      // Background Script 깨우기 오류
     }
   };
   
@@ -86,35 +160,40 @@ window.vopetStatus = {
   setTimeout(wakeUp, 1000);
 })();
 
-// 드래그 시작 감지
+// -- 드래그 시작 감지 mouse down-- //
 document.addEventListener('mousedown', function(event) {
   isDragging = true;
-  // console.log('마우스 다운 감지');
 });
 
-// 드래그 종료 감지
+// -- 드래그 종료 감지 mouse up 100ms 지연 -- //
+// -- [Function] 드래그 종료 감지 mouse up 100ms 지연 -- //
+// -- 전체 문장 드래그 & 해석 처리 -- //
 document.addEventListener('mouseup', function(event) {
-  if (!isActive) {
-    // console.log('VoPet 비활성화 상태');
-    return;
-  }
+
+  // [Exception] isActive가 false인 경우 드래그 종료
+  if (!isActive) return;
   
+  // [Exception] isDragging이 false인 경우 드래그 종료
   if (!isDragging) return;
   
-  // 약간의 지연을 두고 텍스트 선택 확인
+  // [Exception] 설정된 키가 눌려있지 않으면 무시
+  if (!checkModifierKey(event)) return;
+  
+  // [Exception] 약간의 지연을 두고 텍스트 선택 확인
   setTimeout(() => {
+
     const selection = window.getSelection();
     const text = selection.toString().trim();
     
-    // console.log('선택된 텍스트:', text);
-    
+    // [Exception] text가 있고 길이가 0보다 큰 경우 팝업 표시
+    // ** 단순 클릭 했을 때 팝업 표시를 방지 ** 
     if (text && text.length > 0) {
-      selectedText = text;
-      // console.log('팝업 표시 시작:', text);
-      showTranslationPopup(event, text);
+      selectedText = text; // 선택된 텍스트 저장
+      showTranslationPopup(event, text); // 팝업 표시
     }
     
-    isDragging = false;
+    isDragging = false; // 드래그 상태 초기화
+
   }, 100);
 });
 
@@ -125,20 +204,23 @@ let dragEndPos = null;
 // 마우스 다운에서 드래그 시작 위치 기록
 document.addEventListener('mousedown', function(e) {
   dragStartPos = { x: e.clientX, y: e.clientY };
-  // console.log('드래그 시작 위치:', dragStartPos);
 });
 
-// 마우스 업에서 드래그 끝 위치 기록
+// -- [Function] 짧은 단어 처리 리스너  -- //
 document.addEventListener('mouseup', function(e) {
+
+  // [Exception] 설정된 키가 눌려있지 않으면 무시
+  if (!checkModifierKey(e)) return;
+
   dragEndPos = { x: e.clientX, y: e.clientY };
-  // console.log('드래그 끝 위치:', dragEndPos);
-  
   // 드래그가 끝난 후 정확한 단어만 선택하도록 처리
   setTimeout(() => {
     const selection = window.getSelection();
     const text = selection.toString().trim();
     
+    // [Exception] currentPopup이 null인 경우 팝업 표시
     if (text && text.length > 0 && !currentPopup) {
+      // [Exception] 드래그 거리 확인
       // 드래그 거리 확인
       if (dragStartPos && dragEndPos) {
         const deltaX = Math.abs(dragEndPos.x - dragStartPos.x);
@@ -146,13 +228,11 @@ document.addEventListener('mouseup', function(e) {
         
         // 세로 드래그가 너무 크면 무시
         if (deltaY > 20) {
-          // console.log('세로 드래그 너무 큼, 무시:', text);
           return;
         }
         
         // 가로 드래그가 너무 크면 무시
         if (deltaX > 200) {
-          // console.log('가로 드래그 너무 큼, 무시:', text);
           return;
         }
       }
@@ -162,7 +242,6 @@ document.addEventListener('mouseup', function(e) {
       
       // 단일 단어만 처리
       if (!hasLineBreaks && text.length < 50 && text.split(' ').length <= 3) {
-        // console.log('정확한 단어 선택 감지:', text);
         // 마우스 위치를 대략적으로 추정
         const range = selection.getRangeAt(0);
         const rect = range.getBoundingClientRect();
@@ -172,23 +251,16 @@ document.addEventListener('mouseup', function(e) {
           target: selection.anchorNode.parentElement
         };
         showTranslationPopup(mockEvent, text);
-      } else {
-        // console.log('잘못된 선택 무시:', text);
       }
     }
   }, 50);
 });
 
-// 텍스트 선택 이벤트 (비활성화 - mouseup에서 처리)
-// document.addEventListener('selectionchange', function(event) {
-//   // 이제 mouseup에서 처리하므로 비활성화
-// });
 
-// 팝업 표시 함수
+// -- [Function] 팝업 표시 함수 -- //
 function showTranslationPopup(event, text) {
-  // console.log('팝업 표시 함수 호출됨:', text);
-  
-  // 기존 팝업 제거
+
+  // [Exception] 기존 팝업 제거
   if (currentPopup) {
     currentPopup.remove();
     currentPopup = null;
@@ -225,12 +297,10 @@ function showTranslationPopup(event, text) {
   popup.style.top = `${y - 100}px`;
   popup.style.zIndex = '999999';
   
-  // console.log('팝업 DOM에 추가 중...');
   document.body.appendChild(popup);
   currentPopup = popup;
-  // console.log('팝업 추가 완료');
   
-  // 닫기 버튼 이벤트 (최강력한 방법)
+  // -- [Function] 닫기 버튼 이벤트 (최강력한 방법) -- //
   const closeBtn = popup.querySelector('.vopet-close-btn');
   if (closeBtn) {
     // 모든 이벤트 차단
@@ -238,7 +308,6 @@ function showTranslationPopup(event, text) {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
-      console.log('닫기 버튼 클릭됨 - 최강력 제거');
       
       // 팝업 강제 제거
       if (currentPopup) {
@@ -266,7 +335,6 @@ function showTranslationPopup(event, text) {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
-      console.log('닫기 버튼 클릭됨 - 캡처 단계');
       
       if (currentPopup) {
         currentPopup.remove();
@@ -335,8 +403,6 @@ async function translateWord(text) {
     let furigana = '';
     
     // 선택된 번역 서비스에 따라 번역 실행
-    console.log('번역 설정:', { translatorService, hasApiKey: !!apiKey, text });
-    
     if (translatorService === 'deepl') {
       if (!apiKey) {
         throw new Error('DeepL API 키가 필요합니다. 팝업에서 API 키를 입력해주세요.');
@@ -351,7 +417,6 @@ async function translateWord(text) {
       translation = await translateWithGoogleAPI(text, targetLanguage, apiKey);
     } else {
       // Google Translate 무료 API 사용 (API 키 없이)
-      console.log('Google Translate 무료 버전 사용');
       translation = await translateWithGoogleFree(text, targetLanguage);
     }
     
@@ -447,8 +512,6 @@ async function translateWord(text) {
 // DeepL API 사용 (무료 플랜: 월 50만 자) - Background Script를 통해 호출 (CORS 문제 해결)
 async function translateWithDeepL(text, targetLanguage, apiKey) {
   try {
-    console.log('DeepL API 사용 (Background Script 통해):', text, '→', targetLanguage);
-    
     if (!apiKey || apiKey.trim().length === 0) {
       throw new Error('DeepL API 키가 입력되지 않았습니다');
     }
@@ -470,8 +533,6 @@ async function translateWithDeepL(text, targetLanguage, apiKey) {
     
     // Background Script를 통해 API 호출 (CORS 문제 해결)
     return new Promise((resolve, reject) => {
-      console.log('Background Script로 메시지 전송 시작');
-      
       // Background Script 연결 확인 및 활성화
       if (!chrome.runtime || !chrome.runtime.sendMessage) {
         reject(new Error('Chrome Runtime API를 사용할 수 없습니다. 확장 프로그램이 제대로 로드되었는지 확인하세요.'));
@@ -483,11 +544,9 @@ async function translateWithDeepL(text, targetLanguage, apiKey) {
         return new Promise((resolveCheck, rejectCheck) => {
           chrome.runtime.sendMessage({ action: 'ping' }, (pingResponse) => {
             if (!chrome.runtime.lastError) {
-              console.log('✅ Background Script 활성화 확인!');
               resolveCheck(true);
             } else {
               if (retries > 0) {
-                console.log(`Background Script 대기 중... (남은 시도: ${retries})`);
                 setTimeout(() => waitForBackground(retries - 1).then(resolveCheck).catch(rejectCheck), 200);
               } else {
                 console.error('❌ Background Script 연결 실패');
@@ -499,8 +558,6 @@ async function translateWithDeepL(text, targetLanguage, apiKey) {
       };
       
       waitForBackground().then(() => {
-        // Background Script가 활성화된 후 번역 요청 전송
-        console.log('번역 요청 전송 중...');
         // 소스 언어 감지 결과도 함께 전달
         chrome.runtime.sendMessage({
           action: 'translate',
@@ -524,7 +581,6 @@ async function translateWithDeepL(text, targetLanguage, apiKey) {
           }
           
           if (response && response.success) {
-            console.log('✅ DeepL 번역 성공:', response.translation);
             resolve(response.translation);
           } else {
             console.error('❌ DeepL 번역 실패:', response?.error);
@@ -544,8 +600,6 @@ async function translateWithDeepL(text, targetLanguage, apiKey) {
 // Google Translate API 사용 (유료) - Background Script를 통해 호출
 async function translateWithGoogleAPI(text, targetLanguage, apiKey) {
   try {
-    console.log('Google Translate API 사용 (Background Script 통해):', text, '→', targetLanguage);
-    
     if (!apiKey || apiKey.trim().length === 0) {
       throw new Error('Google Translate API 키가 입력되지 않았습니다');
     }
@@ -557,11 +611,9 @@ async function translateWithGoogleAPI(text, targetLanguage, apiKey) {
         return new Promise((resolveCheck, rejectCheck) => {
           chrome.runtime.sendMessage({ action: 'ping' }, (pingResponse) => {
             if (!chrome.runtime.lastError) {
-              console.log('✅ Background Script 활성화 확인!');
               resolveCheck(true);
             } else {
               if (retries > 0) {
-                console.log(`Background Script 대기 중... (남은 시도: ${retries})`);
                 setTimeout(() => waitForBackground(retries - 1).then(resolveCheck).catch(rejectCheck), 200);
               } else {
                 console.error('❌ Background Script 연결 실패');
@@ -594,7 +646,6 @@ async function translateWithGoogleAPI(text, targetLanguage, apiKey) {
           }
           
           if (response && response.success) {
-            console.log('✅ Google Translate 번역 성공:', response.translation);
             resolve(response.translation);
           } else {
             console.error('❌ Google Translate 번역 실패:', response?.error);
@@ -614,8 +665,6 @@ async function translateWithGoogleAPI(text, targetLanguage, apiKey) {
 // Google Translate 무료 API 사용 (API 키 없이)
 async function translateWithGoogleFree(text, targetLanguage) {
   try {
-    console.log('Google Translate 무료 API 사용:', text, '→', targetLanguage);
-    
     // 언어 코드 매핑
     const languageMap = {
       'ko': 'ko',
@@ -634,29 +683,22 @@ async function translateWithGoogleFree(text, targetLanguage) {
     
     // Google Translate 무료 API 호출 (후리가나 정보 포함)
     const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&dt=rm&q=${encodeURIComponent(text)}`;
-    console.log('Google API URL:', apiUrl);
     
     const response = await fetch(apiUrl);
-    console.log('Google API 응답 상태:', response.status);
     
     if (response.ok) {
       const data = await response.json();
-      console.log('Google API 응답 데이터:', data);
       
       if (data && data[0] && data[0][0] && data[0][0][0]) {
         const translation = data[0][0][0];
-        console.log('Google 번역 성공:', translation);
         return translation;
       } else {
-        console.log('Google API 응답 형식 오류');
         throw new Error('번역 결과를 가져올 수 없습니다');
       }
     } else {
-      console.log('Google API 실패');
       throw new Error('번역 API 호출에 실패했습니다');
     }
   } catch (error) {
-    console.log('Google Translate 무료 API 오류:', error);
     throw error;
   }
 }
@@ -711,15 +753,10 @@ function isShortKanjiWord(text) {
 // 후리가나 가져오기 함수
 async function getFurigana(text, sourceLang) {
   try {
-    console.log('후리가나 요청:', text, 'sourceLang:', sourceLang);
-    
     // 한자가 포함되어 있지 않으면 후리가나 불필요
     if (!/[\u4e00-\u9fff]/.test(text)) {
-      console.log('한자 없음, 후리가나 불필요');
       return null;
     }
-    
-    console.log('Google API로 후리가나 요청 시도');
     
     // Google Translate API에서 후리가나 정보 포함하여 요청
     // dt=rm: 로마자 발음, dt=t: 번역
@@ -728,7 +765,6 @@ async function getFurigana(text, sourceLang) {
     
     if (response.ok) {
       const data = await response.json();
-      console.log('후리가나 API 전체 응답:', JSON.stringify(data, null, 2));
       
       // 후리가나 정보 추출 시도 (여러 가능한 경로 확인)
       let furigana = null;
@@ -740,17 +776,14 @@ async function getFurigana(text, sourceLang) {
       
       // 방법 1: data[1] (로마자 발음 배열) 확인
       if (data && Array.isArray(data[1]) && data[1].length > 0) {
-        console.log('data[1] 배열 발견, 길이:', data[1].length);
         // data[1]의 첫 번째 항목이 로마자 발음 정보를 포함할 수 있음
         for (let i = 0; i < data[1].length; i++) {
           const item = data[1][i];
-          console.log(`data[1][${i}]:`, item);
           
           if (Array.isArray(item) && item.length > 0) {
             // item[0]이 로마자 발음일 가능성
             const romaji = item[0];
             if (romaji && typeof romaji === 'string' && romaji.trim().length > 0) {
-              console.log('로마자 발음 발견:', romaji);
               // 로마자 발음을 후리가나로 표시 (일단 로마자로 표시)
               // 실제 히라가나 변환은 복잡하므로, 로마자를 표시하거나 
               // 별도의 일본어 사전 API가 필요함
@@ -759,7 +792,6 @@ async function getFurigana(text, sourceLang) {
             }
           } else if (typeof item === 'string' && item.trim().length > 0) {
             // 직접 문자열인 경우
-            console.log('직접 문자열 로마자 발견:', item);
             furigana = `[${item}]`;
             break;
           }
@@ -769,17 +801,14 @@ async function getFurigana(text, sourceLang) {
       // 방법 2: data[0]에서 추가 발음 정보 확인 (일부 응답 구조)
       if (!furigana && data && Array.isArray(data[0]) && data[0].length > 0) {
         const firstItem = data[0][0];
-        console.log('data[0][0] 확인:', firstItem);
         
         if (Array.isArray(firstItem) && firstItem.length > 5) {
           // data[0][0][5] 또는 다른 인덱스에 발음 정보가 있을 수 있음
           for (let i = 0; i < firstItem.length; i++) {
             const field = firstItem[i];
             if (typeof field === 'string' && field.length > 0 && field !== text) {
-              console.log(`data[0][0][${i}]:`, field);
               // 발음으로 보이는 필드 확인 (로마자 패턴)
               if (/^[a-zA-Z\s'-]+$/.test(field)) {
-                console.log('로마자 패턴 매치:', field);
                 furigana = `[${field}]`;
                 break;
               }
@@ -790,11 +819,9 @@ async function getFurigana(text, sourceLang) {
       
       // 방법 3: data[5] 또는 다른 배열 인덱스 확인
       if (!furigana && data && data.length > 5) {
-        console.log('data[5] 확인:', data[5]);
         if (Array.isArray(data[5]) && data[5].length > 0) {
           const altPron = data[5][0];
           if (Array.isArray(altPron) && altPron.length > 0 && typeof altPron[0] === 'string') {
-            console.log('data[5]에서 발음 발견:', altPron[0]);
             furigana = `[${altPron[0]}]`;
           }
         }
@@ -804,18 +831,11 @@ async function getFurigana(text, sourceLang) {
       // 실제로는 별도의 일본어 사전 API나 MeCab 같은 형태소 분석기가 필요함
       
       if (furigana) {
-        console.log('후리가나 추출 성공:', furigana);
         return furigana;
       } else {
-        console.log('후리가나를 찾을 수 없음, API 응답 구조:', data);
-        // 응답 구조를 자세히 기록
-        console.log('응답 타입:', typeof data);
-        console.log('data[0] 타입:', typeof data[0]);
-        console.log('data[1] 타입:', typeof data[1]);
         return null;
       }
     } else {
-      console.log('후리가나 API HTTP 오류:', response.status, response.statusText);
       return null;
     }
     
@@ -1201,7 +1221,6 @@ document.addEventListener('click', function(event) {
   }
   
   if (currentPopup && !currentPopup.contains(event.target)) {
-    console.log('팝업 외부 클릭으로 닫기');
     currentPopup.remove();
     currentPopup = null;
   }
@@ -1215,7 +1234,6 @@ document.addEventListener('click', function(event) {
 // ESC 키로 팝업 닫기
 document.addEventListener('keydown', function(event) {
   if (event.key === 'Escape' && currentPopup) {
-    console.log('ESC 키로 팝업 닫기');
     currentPopup.remove();
     currentPopup = null;
   }

@@ -15,7 +15,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["detailWindow.js", "content.js"],
+      "js": ["resource/lottie.min.js", "lottieIcon.js", "detailWindow.js", "content.js"],
       "css": ["content.css"]
     }
   ],
@@ -25,5 +25,17 @@
   },
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "*.json",
+        "*.html",
+        "resource/*.json",
+        "resource/*.png",
+        "lottie/*.json"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
