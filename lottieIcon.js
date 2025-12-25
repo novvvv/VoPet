@@ -1,5 +1,8 @@
 // 말풍선 팝업 상태 관리
 let speechBubble = null;
+let settingsIconImg = null; // 설정 아이콘 이미지 참조
+let homeIconImg = null; // 홈 아이콘 이미지 참조
+let messageIconImg = null; // 메시지 아이콘 이미지 참조
 
 // HTML 이스케이프 함수
 function escapeHtml(text) {
@@ -9,10 +12,80 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// 아이콘 상태 업데이트 함수들
+function updateSettingsIcon(isActive) {
+  if (settingsIconImg) {
+    if (isActive) {
+      settingsIconImg.src = chrome.runtime.getURL('resource/settings.png');
+    } else {
+      settingsIconImg.src = chrome.runtime.getURL('resource/settings_unclicked.png');
+    }
+  }
+}
+
+function updateHomeIcon(isActive) {
+  if (homeIconImg) {
+    if (isActive) {
+      homeIconImg.src = chrome.runtime.getURL('resource/home_clicked.png');
+    } else {
+      homeIconImg.src = chrome.runtime.getURL('resource/home_unclicked.png');
+    }
+  }
+}
+
+function updateMessageIcon(isActive) {
+  if (messageIconImg) {
+    if (isActive) {
+      messageIconImg.src = chrome.runtime.getURL('resource/chat_clicked.png');
+    } else {
+      messageIconImg.src = chrome.runtime.getURL('resource/chat_unclicked.png');
+    }
+  }
+}
+
+// 모든 아이콘 비활성화 (특정 아이콘만 활성화)
+function resetAllIcons() {
+  updateSettingsIcon(false);
+  updateHomeIcon(false);
+  updateMessageIcon(false);
+}
+
+// 채팅 화면 표시 함수
+function showChatScreen(contentArea) {
+  // 기존 내용 제거
+  contentArea.innerHTML = '';
+  
+  // 채팅 화면 컨테이너
+  const chatContainer = document.createElement('div');
+  chatContainer.style.cssText = `
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Arial, sans-serif;
+  `;
+  
+  // Chat 텍스트
+  const chatText = document.createElement('div');
+  chatText.textContent = 'Chat';
+  chatText.style.cssText = `
+    font-size: 32px;
+    font-weight: bold;
+    color: #333;
+  `;
+  
+  chatContainer.appendChild(chatText);
+  contentArea.appendChild(chatContainer);
+}
+
 // 설정 화면 표시 함수
 function showSettingsScreen(contentArea) {
   // 기존 내용 제거
   contentArea.innerHTML = '';
+  
+  // 설정 아이콘 활성화
+  updateSettingsIcon(true);
   
   // 설정 화면 컨테이너
   const settingsContainer = document.createElement('div');
@@ -232,7 +305,7 @@ function createSpeechBubble(iconElement) {
   const homeIcon = document.createElement('div');
   homeIcon.className = 'vopet-icon-btn';
   const homeImg = document.createElement('img');
-  homeImg.src = chrome.runtime.getURL('resource/home.png');
+  homeImg.src = chrome.runtime.getURL('resource/home_unclicked.png');
   homeImg.alt = 'Home';
   homeImg.style.cssText = `
     width: 24px;
@@ -250,11 +323,74 @@ function createSpeechBubble(iconElement) {
   });
   homeIcon.appendChild(homeImg);
   
+  // 전역 참조 저장
+  homeIconImg = homeImg;
+  
+  // 홈 아이콘 클릭 이벤트
+  homeIcon.addEventListener('click', function(e) {
+    e.stopPropagation();
+    resetAllIcons();
+    updateHomeIcon(true);
+    
+    // 함수 호출 시도
+    if (typeof showHomeScreen === 'function') {
+      showHomeScreen(contentArea);
+    } else if (typeof window.showHomeScreen === 'function') {
+      window.showHomeScreen(contentArea);
+    } else {
+      // 함수가 없으면 직접 구현
+      contentArea.innerHTML = '';
+      const homeContainer = document.createElement('div');
+      homeContainer.style.cssText = `
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: Arial, sans-serif;
+        gap: 20px;
+      `;
+      
+      const versionText = document.createElement('div');
+      versionText.textContent = 'Vopet Ver 1.0';
+      versionText.style.cssText = `
+        font-size: 24px;
+        font-weight: bold;
+        color: #1C1C1B;
+        text-align: center;
+      `;
+      
+      const updatedText = document.createElement('div');
+      updatedText.textContent = 'updated 2025.12.26';
+      updatedText.style.cssText = `
+        font-size: 12px;
+        color: #999;
+        text-align: center;
+      `;
+      
+      const helloText = document.createElement('div');
+      helloText.textContent = 'Usage Guide \n cmd(ctrl) 키를 누른 상태에서 웹 사이트에서 단어를 드래그 해보세요!';
+      helloText.style.cssText = `
+        font-size: 16px;
+        font-weight: bold;
+        color: #1C1C1B;
+        text-align: center;
+        line-height: 1.5;
+      `;
+      
+      homeContainer.appendChild(versionText);
+      homeContainer.appendChild(updatedText);
+      homeContainer.appendChild(helloText);
+      contentArea.appendChild(homeContainer);
+    }
+  });
+  
   // 설정 아이콘
   const settingsIcon = document.createElement('div');
   settingsIcon.className = 'vopet-icon-btn';
   const settingsImg = document.createElement('img');
-  settingsImg.src = chrome.runtime.getURL('resource/settings.png');
+  settingsImg.src = chrome.runtime.getURL('resource/settings_unclicked.png');
   settingsImg.alt = 'Settings';
   settingsImg.style.cssText = `
     width: 24px;
@@ -272,9 +408,14 @@ function createSpeechBubble(iconElement) {
   });
   settingsIcon.appendChild(settingsImg);
   
+  // 전역 참조 저장
+  settingsIconImg = settingsImg;
+  
   // 설정 아이콘 클릭 이벤트
   settingsIcon.addEventListener('click', function(e) {
     e.stopPropagation();
+    resetAllIcons();
+    updateSettingsIcon(true);
     showSettingsScreen(contentArea);
   });
   
@@ -282,7 +423,7 @@ function createSpeechBubble(iconElement) {
   const messageIcon = document.createElement('div');
   messageIcon.className = 'vopet-icon-btn';
   const messageImg = document.createElement('img');
-  messageImg.src = chrome.runtime.getURL('resource/message.png');
+  messageImg.src = chrome.runtime.getURL('resource/chat_unclicked.png');
   messageImg.alt = 'Message';
   messageImg.style.cssText = `
     width: 24px;
@@ -299,6 +440,17 @@ function createSpeechBubble(iconElement) {
     this.style.opacity = '0.7';
   });
   messageIcon.appendChild(messageImg);
+  
+  // 전역 참조 저장
+  messageIconImg = messageImg;
+  
+  // 메시지 아이콘 클릭 이벤트
+  messageIcon.addEventListener('click', function(e) {
+    e.stopPropagation();
+    resetAllIcons();
+    updateMessageIcon(true);
+    showChatScreen(contentArea);
+  });
   
   iconBar.appendChild(homeIcon);
   iconBar.appendChild(messageIcon);
@@ -364,6 +516,65 @@ function createSpeechBubble(iconElement) {
   }
   
   document.body.appendChild(speechBubble);
+  
+  // 기본적으로 홈 선택 및 홈 화면 표시
+  setTimeout(() => {
+    resetAllIcons();
+    updateHomeIcon(true);
+    
+    // 함수 호출 시도
+    if (typeof showHomeScreen === 'function') {
+      showHomeScreen(contentArea);
+    } else if (typeof window.showHomeScreen === 'function') {
+      window.showHomeScreen(contentArea);
+    } else {
+      // 함수가 없으면 직접 구현
+      contentArea.innerHTML = '';
+      const homeContainer = document.createElement('div');
+      homeContainer.style.cssText = `
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: Arial, sans-serif;
+        gap: 20px;
+      `;
+      
+      const versionText = document.createElement('div');
+      versionText.textContent = 'Vopet Ver 1.0';
+      versionText.style.cssText = `
+        font-size: 24px;
+        font-weight: bold;
+        color: #1C1C1B;
+        text-align: center;
+      `;
+      
+      const updatedText = document.createElement('div');
+      updatedText.textContent = 'updated 2025.12.26';
+      updatedText.style.cssText = `
+        font-size: 12px;
+        color: #999;
+        text-align: center;
+      `;
+      
+      const helloText = document.createElement('div');
+      helloText.textContent = 'Usage Guide \n cmd(ctrl) 키를 누른 상태에서 웹 사이트에서 단어를 드래그 해보세요!';
+      helloText.style.cssText = `
+        font-size: 16px;
+        font-weight: bold;
+        color: #1C1C1B;
+        text-align: center;
+        line-height: 1.5;
+      `;
+      
+      homeContainer.appendChild(versionText);
+      homeContainer.appendChild(updatedText);
+      homeContainer.appendChild(helloText);
+      contentArea.appendChild(homeContainer);
+    }
+  }, 100);
   
   // 팝업 외부 클릭 시 닫기
   setTimeout(() => {
