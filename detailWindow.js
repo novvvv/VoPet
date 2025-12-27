@@ -88,7 +88,7 @@ function openDetailWindow(word, translationData = null) {
         savedAt: new Date().toISOString()
       };
       
-      // 1. 로컬 스토리지에 먼저 저장
+      // 로컬 스토리지에 저장
       chrome.storage.local.get(['savedWords'], function(result) {
         const savedWords = result.savedWords || [];
         const existingIndex = savedWords.findIndex(w => w.word === word);
@@ -99,24 +99,10 @@ function openDetailWindow(word, translationData = null) {
           savedWords.push(wordData);
         }
         
-        chrome.storage.local.set({ savedWords: savedWords });
-      });
-      
-      // 2. EC2 API로도 저장 시도
-      chrome.runtime.sendMessage({
-        action: 'saveWord',
-        wordData: wordData
-      }, function(response) {
-        if (response && response.success) {
-          console.log('서버 저장 성공:', response);
+        chrome.storage.local.set({ savedWords: savedWords }, function() {
           alert('저장되었습니다!');
           detailWindow.close();
-        } else {
-          console.error('서버 저장 실패:', response?.error);
-          // 서버 저장 실패해도 로컬은 저장되었으므로 성공 메시지 표시
-          alert('로컬에 저장되었습니다. (서버 연결 실패)');
-          detailWindow.close();
-        }
+        });
       });
     }
     
