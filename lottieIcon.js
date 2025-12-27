@@ -840,8 +840,283 @@ function showSettingsScreen(contentArea) {
     }, 2000);
   }
   
+  // CSV/Numbers 파일 연동 섹션
+  const fileSyncSection = document.createElement('div');
+  fileSyncSection.style.cssText = `
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+  `;
+  
+  const fileSyncLabel = document.createElement('label');
+  fileSyncLabel.textContent = 'CSV/Numbers 파일 연동';
+  fileSyncLabel.style.cssText = `
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #555;
+  `;
+  
+  const fileInfo = document.createElement('div');
+  fileInfo.id = 'file-sync-info';
+  fileInfo.style.cssText = `
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 10px;
+    padding: 8px;
+    background: white;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+  `;
+  
+  // 파일 선택 버튼
+  const fileSelectButton = document.createElement('button');
+  fileSelectButton.textContent = '파일 선택';
+  fileSelectButton.style.cssText = `
+    padding: 8px 16px;
+    border: 1px solid #007bff;
+    border-radius: 6px;
+    font-size: 13px;
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+    margin-right: 8px;
+    transition: all 0.2s ease;
+  `;
+  
+  fileSelectButton.addEventListener('mouseenter', function() {
+    this.style.background = '#0056b3';
+    this.style.borderColor = '#0056b3';
+  });
+  
+  fileSelectButton.addEventListener('mouseleave', function() {
+    this.style.background = '#007bff';
+    this.style.borderColor = '#007bff';
+  });
+  
+  // 파일 연결 해제 버튼
+  const fileDisconnectButton = document.createElement('button');
+  fileDisconnectButton.textContent = '연결 해제';
+  fileDisconnectButton.style.cssText = `
+    padding: 8px 16px;
+    border: 1px solid #dc3545;
+    border-radius: 6px;
+    font-size: 13px;
+    background: white;
+    color: #dc3545;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  `;
+  
+  fileDisconnectButton.addEventListener('mouseenter', function() {
+    this.style.background = '#f8f9fa';
+  });
+  
+  fileDisconnectButton.addEventListener('mouseleave', function() {
+    this.style.background = 'white';
+  });
+  
+  // 파일 선택 input (숨김) - 일반 파일 선택용
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = '.csv,.numbers';
+  fileInput.style.display = 'none';
+  
+  // File System Access API용 파일 핸들 저장 변수
+  let fileHandle = null;
+  
+  // 파일 정보 업데이트 함수
+  function updateFileInfo() {
+    chrome.storage.local.get(['syncedFileName'], function(result) {
+      if (result.syncedFileName) {
+        const isNumbers = result.syncedFileName.endsWith('.numbers');
+        fileInfo.innerHTML = `
+          <strong>연동된 파일:</strong> ${escapeHtml(result.syncedFileName)}<br>
+          ${isNumbers ? 
+            '<small style="color: #ff9800;">⚠️ Numbers 파일은 CSV로 내보낸 후 사용해주세요</small>' :
+            '<small style="color: #28a745;">✓ 저장 버튼이 활성화됩니다</small>'
+          }
+        `;
+        fileDisconnectButton.style.display = 'inline-block';
+      } else {
+        fileInfo.innerHTML = `
+          <span style="color: #999;">연동된 파일이 없습니다</span><br>
+          <small>CSV 파일을 선택하면 단어 저장 시 자동으로 추가됩니다</small>
+        `;
+        fileDisconnectButton.style.display = 'none';
+      }
+    });
+  }
+  
+  // 파일 선택 버튼 클릭 - File System Access API 사용
+  fileSelectButton.addEventListener('click', async function() {
+    try {
+      // File System Access API 사용 (Chrome 86+)
+      if ('showOpenFilePicker' in window) {
+        const [handle] = await window.showOpenFilePicker({
+          types: [{
+            description: 'CSV 파일',
+            accept: {
+              'text/csv': ['.csv']
+            }
+          }],
+          excludeAcceptAllOption: false,
+          multiple: false
+        });
+        
+        fileHandle = handle;
+        const file = await handle.getFile();
+        
+        // 파일 핸들을 IndexedDB에 저장
+        const dbName = 'vopet_file_handles';
+        const dbVersion = 1;
+        const request = indexedDB.open(dbName, dbVersion);
+        
+        request.onerror = () => {
+          console.error('IndexedDB 오류:', request.error);
+        };
+        
+        request.onsuccess = () => {
+          const db = request.result;
+          const transaction = db.transaction(['fileHandles'], 'readwrite');
+          const store = transaction.objectStore('fileHandles');
+          
+          // 파일 핸들 저장
+          store.put({ id: 'current', handle: handle, fileName: file.name });
+          
+          transaction.oncomplete = () => {
+            console.log('파일 핸들 저장 완료');
+          };
+        };
+        
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains('fileHandles')) {
+            db.createObjectStore('fileHandles', { keyPath: 'id' });
+          }
+        };
+        
+        // 파일 정보 저장
+        chrome.storage.local.set({
+          syncedFileName: file.name,
+          syncedFileLastModified: file.lastModified
+        });
+        
+        // CSV 파일 읽기
+        if (file.name.endsWith('.csv')) {
+          const reader = new FileReader();
+          reader.onload = async function(e) {
+            const content = e.target.result;
+            
+            chrome.storage.local.set({
+              syncedFileName: file.name,
+              syncedFileLastModified: file.lastModified,
+              syncedFileContent: content
+            }, function() {
+              updateFileInfo();
+              showSaveMessage(settingsContainer);
+            });
+          };
+          reader.readAsText(file, 'UTF-8');
+        } else {
+          alert('CSV 파일만 지원됩니다.');
+        }
+      } else {
+        // File System Access API를 지원하지 않는 경우 일반 파일 선택 사용
+        fileInput.click();
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('파일 선택 오류:', error);
+        // File System Access API 실패 시 일반 파일 선택으로 폴백
+        fileInput.click();
+      }
+    }
+  });
+  
+  // 파일 선택 이벤트
+  fileInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      // Numbers 파일인 경우 안내
+      if (file.name.endsWith('.numbers')) {
+        alert('Numbers 파일은 직접 읽을 수 없습니다.\n\n사용 방법:\n1. Numbers에서 파일을 열기\n2. "파일" > "다른 이름으로 저장" > "CSV" 선택\n3. CSV 파일로 저장 후 다시 선택해주세요');
+        
+        // Numbers 파일도 일단 저장 (나중에 CSV로 변환하도록 안내)
+        chrome.storage.local.set({
+          syncedFileName: file.name,
+          syncedFileLastModified: file.lastModified,
+          syncedFileContent: null // Numbers는 내용을 읽을 수 없음
+        }, function() {
+          updateFileInfo();
+        });
+        return;
+      }
+      
+      // CSV 파일인 경우
+      if (file.name.endsWith('.csv')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const content = e.target.result;
+          
+          // 파일 정보 저장
+          chrome.storage.local.set({
+            syncedFileName: file.name,
+            syncedFileLastModified: file.lastModified,
+            syncedFileContent: content
+          }, function() {
+            updateFileInfo();
+            showSaveMessage(settingsContainer);
+            
+            // Background script에 파일 정보 전달
+            chrome.runtime.sendMessage({
+              action: 'setSyncedFile',
+              fileName: file.name,
+              fileSize: file.size,
+              fileType: file.type
+            });
+          });
+        };
+        reader.onerror = function() {
+          alert('파일을 읽는 중 오류가 발생했습니다.');
+        };
+        reader.readAsText(file, 'UTF-8');
+      } else {
+        alert('CSV 파일만 지원됩니다.');
+      }
+    }
+  });
+  
+  // 연결 해제 버튼 클릭
+  fileDisconnectButton.addEventListener('click', function() {
+    if (confirm('파일 연동을 해제하시겠습니까?')) {
+      fileHandle = null;
+      chrome.storage.local.remove(['syncedFileName', 'syncedFileContent', 'syncedFileLastModified', 'fileHandleId'], function() {
+        updateFileInfo();
+        showSaveMessage(settingsContainer);
+        
+        chrome.runtime.sendMessage({
+          action: 'clearSyncedFile'
+        });
+      });
+    }
+  });
+  
+  fileSyncSection.appendChild(fileSyncLabel);
+  fileSyncSection.appendChild(fileInfo);
+  fileSyncSection.appendChild(fileSelectButton);
+  fileSyncSection.appendChild(fileDisconnectButton);
+  fileSyncSection.appendChild(fileInput);
+  
+  // 초기 파일 정보 로드
+  updateFileInfo();
+  
   settingsContainer.appendChild(keySection);
   settingsContainer.appendChild(translationSettingsContainer);
+  settingsContainer.appendChild(fileSyncSection);
   
   contentArea.appendChild(settingsContainer);
 }
@@ -960,7 +1235,7 @@ function createSpeechBubble(iconElement) {
       `;
       
       const versionText = document.createElement('div');
-      versionText.textContent = 'Vopet Ver 1.0';
+      versionText.textContent = 'Vopet Ver 1.0 Beta';
       versionText.style.cssText = `
         font-size: 24px;
         font-weight: bold;
@@ -977,7 +1252,7 @@ function createSpeechBubble(iconElement) {
       `;
       
       const helloText = document.createElement('div');
-      helloText.textContent = 'Usage Guide \n cmd(ctrl) 키를 누른 상태에서 웹 사이트에서 단어를 드래그 해보세요!';
+      helloText.textContent = 'cmd(ctrl) 키를 누른 상태에서 웹 사이트에서 단어를 드래그 해보세요!';
       helloText.style.cssText = `
         font-size: 16px;
         font-weight: bold;

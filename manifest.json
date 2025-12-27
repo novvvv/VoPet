@@ -5,7 +5,8 @@
   "description": "드래그한 단어를 실시간으로 해석해주는 크롬 익스텐션",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "clipboardRead"
   ],
   "host_permissions": [
     "https://*/*",
@@ -15,13 +16,22 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["resource/lottie.min.js", "papagoIntegration.js", "homeScreen.js", "lottieIcon.js", "detailWindow.js", "content.js"],
+      "js": ["resource/lottie.min.js", "papagoIntegration.js", "homeScreen.js", "lottieIcon.js", "detailWindow.js", "screenshotTranslation.js", "content.js"],
       "css": ["content.css"]
     }
   ],
   "action": {
     "default_popup": "popup.html",
     "default_title": "VoPet 단어 해석기"
+  },
+  "commands": {
+    "translate-screenshot": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+V",
+        "mac": "Command+Shift+V"
+      },
+      "description": "화면 캡처 번역"
+    }
   },
   "background": {
     "service_worker": "background.js"
