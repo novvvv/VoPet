@@ -266,21 +266,20 @@ function showTranslationPopup(event, text) {
     currentPopup = null;
   }
   
-  // 새 팝업 생성
+  // 새 팝업 생성 (화면 캡처 번역과 동일한 스타일)
   const popup = document.createElement('div');
   popup.id = 'vopet-translation-popup';
-  
-  popup.innerHTML = `
-    <div class="vopet-popup-content">
-      <div class="vopet-popup-header">
-        <span class="vopet-word">${text}</span>
-        <button class="vopet-close-btn">&times;</button>
-      </div>
-      <div class="vopet-popup-body">
-        <div class="vopet-loading">해석 중...</div>
-        <div class="vopet-result" style="display: none;"></div>
-      </div>
-    </div>
+  popup.style.cssText = `
+    position: fixed;
+    background: #fff;
+    border: 2px solid #000;
+    z-index: 2147483647;
+    max-width: 420px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   `;
   
   // 팝업 위치 설정 (더 안전한 위치 계산)
@@ -288,14 +287,24 @@ function showTranslationPopup(event, text) {
   let y = event.clientY || window.innerHeight / 2;
   
   // 화면 밖으로 나가지 않도록 조정
-  if (x > window.innerWidth - 300) x = window.innerWidth - 320;
+  if (x > window.innerWidth - 420) x = window.innerWidth - 440;
+  if (x < 20) x = 20;
   if (y < 100) y = 100;
   if (y > window.innerHeight - 200) y = window.innerHeight - 220;
   
-  popup.style.position = 'fixed';
   popup.style.left = `${x}px`;
   popup.style.top = `${y - 100}px`;
-  popup.style.zIndex = '999999';
+  
+  popup.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #000; background: #000; color: #fff;">
+      <span style="font-size: 13px; font-weight: 600;">번역</span>
+      <button class="vopet-close-btn" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #fff;">×</button>
+    </div>
+    <div style="padding: 20px; max-height: 60vh; overflow-y: auto;">
+      <div class="vopet-loading" style="text-align: center; color: #666; font-size: 14px;">해석 중...</div>
+      <div class="vopet-result" style="display: none;"></div>
+    </div>
+  `;
   
   document.body.appendChild(popup);
   currentPopup = popup;
@@ -384,19 +393,22 @@ function processFileHandleRequest(getRequest, db, csvContent, fileData, saveButt
         // 성공 처리
         clearTimeout(timeoutId);
         saveButton.textContent = '✓ 저장됨';
-        saveButton.style.background = '#28a745';
+        saveButton.style.background = '#000';
+        saveButton.style.color = '#fff';
         saveButton.disabled = false;
         
         setTimeout(() => {
           saveButton.textContent = '💾 저장';
-          saveButton.style.background = '#28a745';
+          saveButton.style.background = '#fff';
+          saveButton.style.color = '#000';
         }, 2000);
       } catch (error) {
         console.error('파일 쓰기 오류:', error);
         clearTimeout(timeoutId);
         saveButton.disabled = false;
         saveButton.textContent = '💾 저장';
-        saveButton.style.background = '#28a745';
+        saveButton.style.background = '#fff';
+        saveButton.style.color = '#000';
         alert('파일 저장 중 오류가 발생했습니다: ' + error.message);
       }
     } else {
@@ -420,7 +432,8 @@ function processFileHandleRequest(getRequest, db, csvContent, fileData, saveButt
             clearTimeout(timeoutId);
             saveButton.disabled = false;
             saveButton.textContent = '💾 저장';
-            saveButton.style.background = '#28a745';
+            saveButton.style.background = '#fff';
+            saveButton.style.color = '#000';
             alert('파일 저장 중 오류가 발생했습니다: object store를 찾을 수 없습니다.');
             return;
           }
@@ -437,12 +450,14 @@ function processFileHandleRequest(getRequest, db, csvContent, fileData, saveButt
           console.log('파일 저장 완료');
           clearTimeout(timeoutId);
           saveButton.textContent = '✓ 저장됨';
-          saveButton.style.background = '#28a745';
+          saveButton.style.background = '#000';
+          saveButton.style.color = '#fff';
           saveButton.disabled = false;
           
           setTimeout(() => {
             saveButton.textContent = '💾 저장';
-            saveButton.style.background = '#28a745';
+            saveButton.style.background = '#fff';
+            saveButton.style.color = '#000';
           }, 2000);
         }).catch((error) => {
           if (error.name !== 'AbortError') {
@@ -450,14 +465,16 @@ function processFileHandleRequest(getRequest, db, csvContent, fileData, saveButt
             clearTimeout(timeoutId);
             saveButton.disabled = false;
             saveButton.textContent = '💾 저장';
-            saveButton.style.background = '#28a745';
+            saveButton.style.background = '#fff';
+            saveButton.style.color = '#000';
             alert('파일 저장 중 오류가 발생했습니다: ' + error.message);
           } else {
             console.log('사용자가 저장 취소');
             clearTimeout(timeoutId);
             saveButton.disabled = false;
             saveButton.textContent = '💾 저장';
-            saveButton.style.background = '#28a745';
+            saveButton.style.background = '#fff';
+            saveButton.style.color = '#000';
           }
         });
       } else {
@@ -478,12 +495,14 @@ function processFileHandleRequest(getRequest, db, csvContent, fileData, saveButt
         
         clearTimeout(timeoutId);
         saveButton.textContent = '✓ 저장됨';
-        saveButton.style.background = '#28a745';
+        saveButton.style.background = '#000';
+        saveButton.style.color = '#fff';
         saveButton.disabled = false;
         
         setTimeout(() => {
           saveButton.textContent = '💾 저장';
-          saveButton.style.background = '#28a745';
+          saveButton.style.background = '#fff';
+          saveButton.style.color = '#000';
         }, 2000);
       }
     }
@@ -494,7 +513,8 @@ function processFileHandleRequest(getRequest, db, csvContent, fileData, saveButt
     clearTimeout(timeoutId);
     saveButton.disabled = false;
     saveButton.textContent = '💾 저장';
-    saveButton.style.background = '#28a745';
+    saveButton.style.background = '#fff';
+    saveButton.style.color = '#000';
     alert('파일 핸들을 가져올 수 없습니다. 파일을 다시 선택해주세요.');
   };
 }
@@ -539,7 +559,7 @@ async function translateWord(text) {
       translation = await translateWithGoogleFree(text, targetLanguage);
     }
     
-    // 일본어 관련 후리가나 확인 (한자가 포함된 짧은 단어만)
+    // 일본어 관련 후리가나 확인 (한자가 포함된 텍스트)
     const sourceLang = detectLanguage(text);
     if ((sourceLang === 'ja' || targetLanguage === 'ja') && isShortKanjiWord(text)) {
       if (sourceLang === 'ja') {
@@ -565,46 +585,73 @@ async function translateWord(text) {
         return;
       }
       
-      // 먼저 전체 번역 문장 표시
-      let initialHTML = '';
-      if (furigana) {
-        initialHTML = `
-          <div class="vopet-translation-full">${escapeHtml(translation)}</div>
-          <small class="furigana">${escapeHtml(furigana)}</small>
-        `;
-      } else {
-        initialHTML = `
-          <div class="vopet-translation-full">${escapeHtml(translation)}</div>
-        `;
-      }
-      
-      // 저장 버튼 추가 (파일 연동 여부 확인)
+      // 저장 버튼 추가 (파일 연동 여부 확인) - 먼저 확인
       chrome.storage.local.get(['syncedFileName', 'syncedFileContent'], function(fileResult) {
         const hasSyncedFile = !!fileResult.syncedFileName;
         const isNumbers = fileResult.syncedFileName && fileResult.syncedFileName.endsWith('.numbers');
         const hasCsvContent = !!fileResult.syncedFileContent;
+        const showSaveButton = hasSyncedFile && !isNumbers && hasCsvContent;
         
-        // CSV 파일이고 내용이 있으면 저장 버튼 표시
-        if (hasSyncedFile && !isNumbers && hasCsvContent) {
-          initialHTML += `
-            <div style="margin-top: 12px; text-align: center;">
-              <button class="vopet-save-to-file-btn" data-word="${escapeHtml(text)}" data-translation="${escapeHtml(translation)}" style="
-                padding: 8px 16px;
-                background: #28a745;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-size: 13px;
-                cursor: pointer;
-                font-weight: 500;
-                transition: all 0.2s ease;
-              ">💾 저장</button>
+        // 전체 번역 문장 표시 (화면 캡처 번역과 동일한 스타일)
+        let initialHTML = '';
+        if (furigana) {
+          initialHTML = `
+            <div style="margin-bottom: 20px;">
+              <div style="font-size: 11px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">원문</div>
+              <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-left: 3px solid #000;">${escapeHtml(text)}</div>
+            </div>
+            <div style="margin-bottom: 20px;">
+              <div style="font-size: 11px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">후리가나</div>
+              <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f0f8ff; padding: 12px; border-left: 3px solid #4169e1;">${escapeHtml(furigana.replace(/^\[|\]$/g, ''))}</div>
+            </div>
+            <div style="padding-top: 20px; border-top: 1px solid #e0e0e0;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">번역</div>
+                ${showSaveButton ? `<button class="vopet-save-to-file-btn" data-word="${escapeHtml(text)}" data-translation="${escapeHtml(translation)}" data-furigana="${escapeHtml(furigana ? furigana.replace(/^\[|\]$/g, '') : '')}" style="
+                  background: #fff;
+                  color: #000;
+                  border: 1px solid #000;
+                  padding: 6px 12px;
+                  font-size: 11px;
+                  border-radius: 0;
+                  cursor: pointer;
+                  font-weight: 500;
+                  transition: background 0.2s;
+                ">💾 CSV 저장</button>` : ''}
+              </div>
+              <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-left: 3px solid #000;">${escapeHtml(translation)}</div>
             </div>
           `;
-        } else if (hasSyncedFile && isNumbers) {
+        } else {
+          initialHTML = `
+            <div style="margin-bottom: 20px;">
+              <div style="font-size: 11px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">원문</div>
+              <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-left: 3px solid #000;">${escapeHtml(text)}</div>
+            </div>
+            <div style="padding-top: 20px; border-top: 1px solid #e0e0e0;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">번역</div>
+                ${showSaveButton ? `<button class="vopet-save-to-file-btn" data-word="${escapeHtml(text)}" data-translation="${escapeHtml(translation)}" data-furigana="" style="
+                  background: #fff;
+                  color: #000;
+                  border: 1px solid #000;
+                  padding: 6px 12px;
+                  font-size: 11px;
+                  border-radius: 0;
+                  cursor: pointer;
+                  font-weight: 500;
+                  transition: background 0.2s;
+                ">💾 CSV 저장</button>` : ''}
+              </div>
+              <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-left: 3px solid #000;">${escapeHtml(translation)}</div>
+            </div>
+          `;
+        }
+        
+        if (hasSyncedFile && isNumbers) {
           initialHTML += `
-            <div style="margin-top: 12px; text-align: center; padding: 8px; background: #fff3cd; border-radius: 4px;">
-              <small style="color: #856404; font-size: 11px;">Numbers 파일은 CSV로 변환 후 사용해주세요</small>
+            <div style="margin-top: 12px; text-align: center; padding: 8px; background: #f5f5f5; border: 1px solid #000; border-radius: 0;">
+              <small style="color: #000; font-size: 11px;">Numbers 파일은 CSV로 변환 후 사용해주세요</small>
             </div>
           `;
         }
@@ -614,14 +661,14 @@ async function translateWord(text) {
         // 저장 버튼 이벤트 리스너
         const saveButton = resultDiv.querySelector('.vopet-save-to-file-btn');
         if (saveButton) {
-          // 호버 효과
+          // 호버 효과 (흑백 모노톤)
           saveButton.addEventListener('mouseenter', function() {
-            this.style.background = '#218838';
-            this.style.transform = 'translateY(-1px)';
+            this.style.background = '#000';
+            this.style.color = '#fff';
           });
           saveButton.addEventListener('mouseleave', function() {
-            this.style.background = '#28a745';
-            this.style.transform = 'translateY(0)';
+            this.style.background = '#fff';
+            this.style.color = '#000';
           });
           
             // 클릭 이벤트
@@ -631,8 +678,9 @@ async function translateWord(text) {
               
               const word = this.getAttribute('data-word');
               const translation = this.getAttribute('data-translation');
+              const furigana = this.getAttribute('data-furigana') || '';
               
-              console.log('저장 버튼 클릭:', { word, translation });
+              console.log('저장 버튼 클릭:', { word, translation, furigana });
               
               // 버튼 비활성화 (중복 클릭 방지)
               saveButton.disabled = true;
@@ -644,7 +692,8 @@ async function translateWord(text) {
                 console.warn('저장 타임아웃 - 버튼 복구');
                 saveButton.disabled = false;
                 saveButton.textContent = '💾 저장';
-                saveButton.style.background = '#28a745';
+                saveButton.style.background = '#fff';
+                saveButton.style.color = '#000';
                 alert('저장이 시간 초과되었습니다. 다시 시도해주세요.');
               }, 10000);
             
@@ -659,7 +708,8 @@ async function translateWord(text) {
                 clearTimeout(timeoutId);
                 saveButton.disabled = false;
                 saveButton.textContent = '💾 저장';
-                saveButton.style.background = '#28a745';
+                saveButton.style.background = '#fff';
+                saveButton.style.color = '#000';
                 alert('연동된 파일이 없습니다. 설정에서 파일을 선택해주세요.');
                 return;
               }
@@ -668,7 +718,8 @@ async function translateWord(text) {
                 clearTimeout(timeoutId);
                 saveButton.disabled = false;
                 saveButton.textContent = '💾 저장';
-                saveButton.style.background = '#28a745';
+                saveButton.style.background = '#fff';
+                saveButton.style.color = '#000';
                 alert('Numbers 파일은 CSV로 내보낸 후 사용해주세요.');
                 return;
               }
@@ -677,7 +728,8 @@ async function translateWord(text) {
                 clearTimeout(timeoutId);
                 saveButton.disabled = false;
                 saveButton.textContent = '💾 저장';
-                saveButton.style.background = '#28a745';
+                saveButton.style.background = '#fff';
+                saveButton.style.color = '#000';
                 alert('파일 내용을 읽을 수 없습니다. 파일을 다시 선택해주세요.');
                 return;
               }
@@ -707,19 +759,29 @@ async function translateWord(text) {
               
               if (cleanLines.length === 0) {
                 // 완전히 빈 파일인 경우
-                headerLine = '순서,단어,뜻';
+                headerLine = '순서,단어,발음,뜻';
                 hasHeader = true;
               } else {
                 // 첫 줄이 헤더인지 확인
                 const firstLine = cleanLines[0].toLowerCase();
-                hasHeader = firstLine.includes('순서') || firstLine.includes('단어') || firstLine.includes('뜻');
+                hasHeader = firstLine.includes('순서') || firstLine.includes('단어') || firstLine.includes('뜻') || firstLine.includes('발음') || firstLine.includes('후리가나');
                 
                 if (hasHeader) {
                   headerLine = cleanLines[0];
+                  // 기존 헤더에 발음 컬럼이 없으면 추가
+                  if (!firstLine.includes('발음') && !firstLine.includes('후리가나')) {
+                    // 기존 헤더 구조에 따라 발음 컬럼 추가
+                    // "순서,단어,뜻" -> "순서,단어,발음,뜻"
+                    const headerParts = headerLine.split(',');
+                    if (headerParts.length === 3) {
+                      headerParts.splice(2, 0, '발음');
+                      headerLine = headerParts.join(',');
+                    }
+                  }
                   dataLines = cleanLines.slice(1);
                 } else {
                   // 헤더가 없으면 추가
-                  headerLine = '순서,단어,뜻';
+                  headerLine = '순서,단어,발음,뜻';
                   dataLines = cleanLines;
                   hasHeader = true;
                 }
@@ -753,7 +815,27 @@ async function translateWord(text) {
               
               // 새 순서 번호는 기존 최대값 + 1 (데이터가 없으면 1부터 시작)
               const newLineNumber = maxNumber + 1;
-              const newLine = `${newLineNumber},"${escapeCsvField(word)}","${escapeCsvField(translation)}"`;
+              
+              // 기존 데이터가 3컬럼 형식이면 발음 컬럼 추가 필요
+              // 기존 데이터 형식 확인 (첫 번째 데이터 라인으로)
+              if (dataLines.length > 0) {
+                const firstDataLine = dataLines[0].trim();
+                // CSV 파싱: 쉼표로 분리 (큰따옴표 안의 쉼표는 무시)
+                const fields = firstDataLine.match(/("(?:[^"]|"")*"|[^,]+)(?=\s*,|\s*$)/g);
+                if (fields && fields.length === 3) {
+                  // 기존이 3컬럼이면 모든 데이터에 빈 발음 컬럼 추가
+                  dataLines = dataLines.map(line => {
+                    const lineFields = line.match(/("(?:[^"]|"")*"|[^,]+)(?=\s*,|\s*$)/g);
+                    if (lineFields && lineFields.length === 3) {
+                      lineFields.splice(2, 0, '""');
+                      return lineFields.join(',');
+                    }
+                    return line;
+                  });
+                }
+              }
+              
+              const newLine = `${newLineNumber},"${escapeCsvField(word)}","${escapeCsvField(furigana)}","${escapeCsvField(translation)}"`;
               
               // 새 데이터 추가
               dataLines.push(newLine);
@@ -777,7 +859,8 @@ async function translateWord(text) {
                   clearTimeout(timeoutId);
                   saveButton.disabled = false;
                   saveButton.textContent = '💾 저장';
-                  saveButton.style.background = '#28a745';
+                  saveButton.style.background = '#fff';
+                  saveButton.style.color = '#000';
                   alert('파일 저장 중 오류가 발생했습니다: ' + request.error.message);
                 };
                 
@@ -820,7 +903,8 @@ async function translateWord(text) {
                           clearTimeout(timeoutId);
                           saveButton.disabled = false;
                           saveButton.textContent = '💾 저장';
-                          saveButton.style.background = '#28a745';
+                          saveButton.style.background = '#fff';
+                          saveButton.style.color = '#000';
                           alert('파일 저장 중 오류가 발생했습니다: ' + recreateRequest.error.message);
                         };
                       };
@@ -829,7 +913,8 @@ async function translateWord(text) {
                         clearTimeout(timeoutId);
                         saveButton.disabled = false;
                         saveButton.textContent = '💾 저장';
-                        saveButton.style.background = '#28a745';
+                        saveButton.style.background = '#fff';
+                        saveButton.style.color = '#000';
                         alert('파일 저장 중 오류가 발생했습니다: ' + deleteRequest.error.message);
                       };
                       return;
@@ -845,7 +930,8 @@ async function translateWord(text) {
                     clearTimeout(timeoutId);
                     saveButton.disabled = false;
                     saveButton.textContent = '💾 저장';
-                    saveButton.style.background = '#28a745';
+                    saveButton.style.background = '#fff';
+                    saveButton.style.color = '#000';
                     alert('파일 저장 중 오류가 발생했습니다: ' + error.message);
                   }
                 };
@@ -1112,35 +1198,16 @@ function detectLanguage(text) {
 }
 
 // 한자가 포함된 짧은 단어인지 확인하는 함수
+// 한자가 포함된 텍스트인지 확인하는 함수 (제한 없음)
+// kuromoji.js는 로컬에서 무제한으로 처리 가능하므로 길이/비율 제한 제거
 function isShortKanjiWord(text) {
-  // 너무 긴 텍스트는 제외 (10자 이상)
-  if (text.length > 10) {
-    return false;
-  }
-  
-  // 한자가 포함되어 있는지 확인
-  if (!/[\u4e00-\u9fff]/.test(text)) {
-    return false;
-  }
-  
-  // 히라가나나 가타카나가 너무 많이 포함된 경우 제외 (문장이 아닌 단어여야 함)
-  const hiraganaKatakanaCount = (text.match(/[ひらがなカタカナ]/g) || []).length;
-  const kanjiCount = (text.match(/[\u4e00-\u9fff]/g) || []).length;
-  
-  // 히라가나/가타카나가 한자보다 훨씬 많으면 문장으로 간주
-  if (hiraganaKatakanaCount > kanjiCount * 2) {
-    return false;
-  }
-  
-  // 공백이나 특수문자가 포함된 경우 제외
-  if (/[\s\.,!?。、！？]/.test(text)) {
-    return false;
-  }
-  
-  return true;
+  // 한자가 포함되어 있는지만 확인
+  // kuromoji.js는 길이 제한 없이 모든 일본어 텍스트를 처리 가능
+  return /[\u4e00-\u9fff]/.test(text);
 }
 
 // 후리가나 가져오기 함수
+// kuromoji.js를 우선 사용하고, 실패 시 Google Translate API를 fallback으로 사용
 async function getFurigana(text, sourceLang) {
   try {
     // 한자가 포함되어 있지 않으면 후리가나 불필요
@@ -1148,8 +1215,42 @@ async function getFurigana(text, sourceLang) {
       return null;
     }
     
-    // Google Translate API에서 후리가나 정보 포함하여 요청
-    // dt=rm: 로마자 발음, dt=t: 번역
+    // 1단계: kuromoji.js를 사용한 형태소 분석 시도
+    console.log('🔵 [후리가나] 추출 시도:', text);
+    try {
+      // 전역 함수 확인 (window 객체 또는 직접 전역)
+      console.log('🔵 [후리가나] 함수 확인 중...');
+      console.log('🔵 [후리가나] typeof getHiraganaReading:', typeof getHiraganaReading);
+      console.log('🔵 [후리가나] typeof window:', typeof window);
+      console.log('🔵 [후리가나] window.getHiraganaReading:', typeof window !== 'undefined' ? typeof window.getHiraganaReading : 'window 없음');
+      
+      const getHiraganaFunc = typeof getHiraganaReading !== 'undefined' 
+        ? getHiraganaReading 
+        : (typeof window !== 'undefined' && window.getHiraganaReading);
+      
+      console.log('🔵 [후리가나] getHiraganaFunc:', typeof getHiraganaFunc);
+      
+      if (getHiraganaFunc && typeof getHiraganaFunc === 'function') {
+        console.log('🔵 [후리가나] 함수 호출 중...');
+        const hiragana = await getHiraganaFunc(text);
+        console.log('🔵 [후리가나] 함수 결과:', hiragana);
+        if (hiragana && hiragana !== text) {
+          console.log('✅ [후리가나] kuromoji.js로 히라가나 추출 성공:', hiragana);
+          return `[${hiragana}]`;
+        } else {
+          console.log('⚠️ [후리가나] 결과가 null이거나 원본과 동일함');
+        }
+      } else {
+        console.warn('❌ [후리가나] getHiraganaReading 함수를 찾을 수 없음');
+        console.warn('❌ [후리가나] japaneseMorphology.js가 로드되었는지 확인 필요');
+      }
+    } catch (kuromojiError) {
+      // kuromoji.js가 로드되지 않았거나 오류가 발생한 경우
+      console.error('❌ [후리가나] kuromoji.js 사용 불가, Google Translate API로 fallback:', kuromojiError);
+      console.error('❌ [후리가나] 에러 스택:', kuromojiError.stack);
+    }
+    
+    // 2단계: Google Translate API fallback (기존 방식)
     const furiganaUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl=ja&dt=t&dt=rm&q=${encodeURIComponent(text)}`;
     const response = await fetch(furiganaUrl);
     
@@ -1174,9 +1275,7 @@ async function getFurigana(text, sourceLang) {
             // item[0]이 로마자 발음일 가능성
             const romaji = item[0];
             if (romaji && typeof romaji === 'string' && romaji.trim().length > 0) {
-              // 로마자 발음을 후리가나로 표시 (일단 로마자로 표시)
-              // 실제 히라가나 변환은 복잡하므로, 로마자를 표시하거나 
-              // 별도의 일본어 사전 API가 필요함
+              // 로마자 발음 표시 (히라가나 변환은 kuromoji.js에서 처리)
               furigana = `[${romaji}]`; // 로마자 발음 표시
               break;
             }
@@ -1216,9 +1315,6 @@ async function getFurigana(text, sourceLang) {
           }
         }
       }
-      
-      // 방법 4: 간단한 변환 시도 (한자 자체를 키워드로 사용하는 것은 불가)
-      // 실제로는 별도의 일본어 사전 API나 MeCab 같은 형태소 분석기가 필요함
       
       if (furigana) {
         return furigana;
@@ -1623,9 +1719,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     }
     sendResponse({active: isActive});
   } else if (request.action === 'startCaptureMode') {
-    // 언어 선택 팝업 표시 후 캡처 모드 시작
-    if (window.vopetScreenshotTranslation && window.vopetScreenshotTranslation.showLanguageSelector) {
-      window.vopetScreenshotTranslation.showLanguageSelector(request.imageDataUrl);
+    // 설정에서 선택한 OCR 언어로 바로 캡처 모드 시작
+    if (window.vopetScreenshotTranslation && window.vopetScreenshotTranslation.startCaptureMode) {
+      window.vopetScreenshotTranslation.startCaptureMode(request.imageDataUrl);
       sendResponse({success: true});
     } else {
       sendResponse({success: false, error: '화면 캡처 번역 기능이 로드되지 않았습니다. 페이지를 새로고침해주세요.'});
@@ -1656,17 +1752,20 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       if (request.success) {
         // 버튼 텍스트 변경
         saveButton.textContent = '✓ 저장됨';
-        saveButton.style.background = '#28a745';
+        saveButton.style.background = '#000';
+        saveButton.style.color = '#fff';
         saveButton.disabled = false;
         
         setTimeout(() => {
           saveButton.textContent = '💾 저장';
-          saveButton.style.background = '#28a745';
+          saveButton.style.background = '#fff';
+          saveButton.style.color = '#000';
         }, 2000);
       } else {
         saveButton.disabled = false;
         saveButton.textContent = '💾 저장';
-        saveButton.style.background = '#28a745';
+        saveButton.style.background = '#fff';
+        saveButton.style.color = '#000';
         alert('저장 실패: ' + (request.error || '알 수 없는 오류'));
       }
     } else {

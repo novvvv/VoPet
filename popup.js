@@ -95,19 +95,4 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // 1초마다 상태 업데이트
   setInterval(updateStatus, 1000);
-  
-  // 화면 캡처 번역 버튼
-  const screenshotTranslateBtn = document.getElementById('screenshotTranslateBtn');
-  if (screenshotTranslateBtn) {
-    screenshotTranslateBtn.addEventListener('click', function() {
-      // 팝업 닫고 background에 캡처 요청
-      chrome.runtime.sendMessage({ action: 'captureScreen' }, function(response) {
-        if (chrome.runtime.lastError) {
-          console.error('캡처 요청 오류:', chrome.runtime.lastError);
-        }
-      });
-      // 팝업 닫기
-      window.close();
-    });
-  }
 });

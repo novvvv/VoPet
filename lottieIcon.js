@@ -505,6 +505,135 @@ function showSettingsScreen(contentArea) {
   keySection.appendChild(keyLabel);
   keySection.appendChild(keyButtonContainer);
   
+  // OCR 언어 섹션
+  const ocrLanguageSection = document.createElement('div');
+  ocrLanguageSection.style.cssText = `
+    margin-bottom: 20px;
+  `;
+  
+  const ocrLanguageLabel = document.createElement('label');
+  ocrLanguageLabel.textContent = 'OCR 언어 (화면 캡처 번역)';
+  ocrLanguageLabel.style.cssText = `
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #555;
+  `;
+  
+  // OCR 언어 버튼 컨테이너
+  const ocrLanguageButtonContainer = document.createElement('div');
+  ocrLanguageButtonContainer.style.cssText = `
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    flex-wrap: wrap;
+  `;
+  
+  // OCR 언어 옵션 정의
+  const ocrLanguageOptions = [
+    { value: 'eng', label: 'English' },
+    { value: 'jpn', label: '日本語' },
+    { value: 'kor', label: '한국어' }
+  ];
+  
+  // 저장된 OCR 언어 불러오기
+  let selectedOCRLanguageValue = 'eng';
+  chrome.storage.sync.get(['ocrLanguage'], function(result) {
+    selectedOCRLanguageValue = result.ocrLanguage || 'eng';
+    updateOCRLanguageButtonStates();
+  });
+  
+  // OCR 언어 버튼 상태 업데이트 함수
+  function updateOCRLanguageButtonStates() {
+    ocrLanguageOptions.forEach((option, index) => {
+      const button = ocrLanguageButtonContainer.children[index];
+      if (button) {
+        if (option.value === selectedOCRLanguageValue) {
+          button.style.background = '#333';
+          button.style.color = 'white';
+          button.style.borderColor = '#333';
+        } else {
+          button.style.background = 'white';
+          button.style.color = '#333';
+          button.style.borderColor = '#ddd';
+        }
+      }
+    });
+  }
+  
+  // 각 OCR 언어 옵션에 대한 버튼 생성
+  ocrLanguageOptions.forEach((option) => {
+    const ocrLanguageButton = document.createElement('button');
+    ocrLanguageButton.textContent = option.label;
+    ocrLanguageButton.style.cssText = `
+      padding: 6px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 11px;
+      background: white;
+      color: #333;
+      cursor: pointer;
+      box-sizing: border-box;
+      text-align: center;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      white-space: nowrap;
+    `;
+    
+    // 버튼 클릭 이벤트
+    ocrLanguageButton.addEventListener('click', function() {
+      selectedOCRLanguageValue = option.value;
+      
+      // 저장
+      chrome.storage.sync.set({ ocrLanguage: option.value }, function() {
+        updateOCRLanguageButtonStates();
+        
+        // 저장 성공 메시지
+        const saveMsg = document.createElement('div');
+        saveMsg.textContent = '저장되었습니다!';
+        saveMsg.style.cssText = `
+          position: absolute;
+          top: 10px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #4caf50;
+          color: white;
+          padding: 8px 16px;
+          border-radius: 4px;
+          font-size: 12px;
+          z-index: 1000001;
+        `;
+        settingsContainer.appendChild(saveMsg);
+        setTimeout(() => {
+          saveMsg.remove();
+        }, 2000);
+      });
+    });
+    
+    // 호버 효과
+    ocrLanguageButton.addEventListener('mouseenter', function() {
+      if (option.value !== selectedOCRLanguageValue) {
+        this.style.background = '#f5f5f5';
+        this.style.borderColor = '#bbb';
+      }
+    });
+    ocrLanguageButton.addEventListener('mouseleave', function() {
+      if (option.value !== selectedOCRLanguageValue) {
+        this.style.background = 'white';
+        this.style.borderColor = '#ddd';
+      }
+    });
+    
+    ocrLanguageButtonContainer.appendChild(ocrLanguageButton);
+  });
+  
+  // 초기 버튼 상태 설정
+  setTimeout(updateOCRLanguageButtonStates, 100);
+  
+  ocrLanguageSection.appendChild(ocrLanguageLabel);
+  ocrLanguageSection.appendChild(ocrLanguageButtonContainer);
+  
   // 해석 언어 섹션
   const languageSection = document.createElement('div');
   languageSection.style.cssText = `
@@ -1114,9 +1243,76 @@ function showSettingsScreen(contentArea) {
   // 초기 파일 정보 로드
   updateFileInfo();
   
+  // 화면 캡처 번역 섹션
+  const screenshotSection = document.createElement('div');
+  screenshotSection.style.cssText = `
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+  `;
+  
+  const screenshotLabel = document.createElement('label');
+  screenshotLabel.textContent = '화면 캡처 번역';
+  screenshotLabel.style.cssText = `
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #555;
+  `;
+  
+  const screenshotButton = document.createElement('button');
+  screenshotButton.textContent = '📸 화면 캡처 번역';
+  screenshotButton.style.cssText = `
+    width: 100%;
+    padding: 12px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  `;
+  
+  screenshotButton.addEventListener('mouseenter', function() {
+    this.style.background = '#45a049';
+  });
+  screenshotButton.addEventListener('mouseleave', function() {
+    this.style.background = '#4CAF50';
+  });
+  
+  screenshotButton.addEventListener('click', function() {
+    chrome.runtime.sendMessage({ action: 'captureScreen' }, function(response) {
+      if (chrome.runtime.lastError) {
+        console.error('캡처 요청 오류:', chrome.runtime.lastError);
+        alert('화면 캡처에 실패했습니다: ' + chrome.runtime.lastError.message);
+      }
+    });
+  });
+  
+  const screenshotHelp = document.createElement('small');
+  screenshotHelp.textContent = '버튼 클릭 또는 Cmd+Shift+V (Mac) / Ctrl+Shift+V (Windows)';
+  screenshotHelp.style.cssText = `
+    display: block;
+    margin-top: 8px;
+    color: #666;
+    font-size: 11px;
+    text-align: center;
+  `;
+  
+  screenshotSection.appendChild(screenshotLabel);
+  screenshotSection.appendChild(screenshotButton);
+  screenshotSection.appendChild(screenshotHelp);
+  
   settingsContainer.appendChild(keySection);
+  settingsContainer.appendChild(ocrLanguageSection);
   settingsContainer.appendChild(translationSettingsContainer);
   settingsContainer.appendChild(fileSyncSection);
+  settingsContainer.appendChild(screenshotSection);
   
   contentArea.appendChild(settingsContainer);
 }

@@ -11,90 +11,18 @@ let startX = 0;
 let startY = 0;
 let selectionBox = null;
 let capturedImage = null;
-let selectedOCRLanguage = 'eng'; // 기본값: 영어
-
-/**
- * 언어 선택 팝업 표시
- */
-function showLanguageSelector(imageDataUrl) {
-  const selector = document.createElement('div');
-  selector.id = 'vopet-language-selector';
-  selector.style.cssText = `
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    padding: 24px;
-    z-index: 2147483647;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    text-align: center;
-  `;
-  
-  selector.innerHTML = `
-    <div style="font-size: 14px; font-weight: 600; color: #000; margin-bottom: 20px;">인식할 언어 선택</div>
-    <div style="display: flex; gap: 12px; justify-content: center;">
-      <button class="vopet-lang-btn" data-lang="eng" style="
-        padding: 12px 24px;
-        border: 1px solid #000;
-        background: #000;
-        color: #fff;
-        font-size: 13px;
-        cursor: pointer;
-        font-weight: 500;
-      ">English</button>
-      <button class="vopet-lang-btn" data-lang="jpn" style="
-        padding: 12px 24px;
-        border: 1px solid #e0e0e0;
-        background: #fff;
-        color: #000;
-        font-size: 13px;
-        cursor: pointer;
-        font-weight: 500;
-      ">日本語</button>
-      <button class="vopet-lang-btn" data-lang="kor" style="
-        padding: 12px 24px;
-        border: 1px solid #e0e0e0;
-        background: #fff;
-        color: #000;
-        font-size: 13px;
-        cursor: pointer;
-        font-weight: 500;
-      ">한국어</button>
-    </div>
-    <div style="margin-top: 16px; font-size: 11px; color: #888;">ESC 취소</div>
-  `;
-  
-  document.body.appendChild(selector);
-  
-  // 버튼 클릭 이벤트
-  selector.querySelectorAll('.vopet-lang-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      selectedOCRLanguage = btn.dataset.lang;
-      selector.remove();
-      startCaptureMode(imageDataUrl);
-    });
-  });
-  
-  // ESC 키로 닫기
-  const escHandler = (e) => {
-    if (e.key === 'Escape') {
-      selector.remove();
-      document.removeEventListener('keydown', escHandler);
-    }
-  };
-  document.addEventListener('keydown', escHandler);
-}
 
 /**
  * 화면 캡처 모드 시작
  */
-function startCaptureMode(imageDataUrl) {
+async function startCaptureMode(imageDataUrl) {
   removeOverlay();
   
   if (!imageDataUrl) return;
+  
+  // 저장된 OCR 언어 읽기
+  const result = await chrome.storage.sync.get(['ocrLanguage']).catch(() => ({}));
+  const ocrLanguage = result.ocrLanguage || 'eng';
   
   capturedImage = imageDataUrl;
   
@@ -144,8 +72,11 @@ function startCaptureMode(imageDataUrl) {
     pointer-events: none;
     z-index: 10;
   `;
-  helpText.textContent = `${langNames[selectedOCRLanguage]} · 드래그로 영역 선택 · ESC 취소`;
+  helpText.textContent = `${langNames[ocrLanguage]} · 드래그로 영역 선택 · ESC 취소`;
   captureOverlay.appendChild(helpText);
+  
+  // OCR 언어를 데이터 속성으로 저장
+  captureOverlay.dataset.ocrLanguage = ocrLanguage;
   
   selectionBox = document.createElement('div');
   selectionBox.id = 'vopet-selection-box';
@@ -243,6 +174,16 @@ async function cropAndTranslate(left, top, width, height) {
   }
   
   const imageToProcess = capturedImage;
+  
+  // OCR 언어 가져오기 (overlay에서 또는 저장소에서)
+  let ocrLanguage = 'eng';
+  if (captureOverlay && captureOverlay.dataset.ocrLanguage) {
+    ocrLanguage = captureOverlay.dataset.ocrLanguage;
+  } else {
+    const result = await chrome.storage.sync.get(['ocrLanguage']).catch(() => ({}));
+    ocrLanguage = result.ocrLanguage || 'eng';
+  }
+  
   removeOverlay();
   
   const loadingPopup = showLoadingPopup();
@@ -252,10 +193,10 @@ async function cropAndTranslate(left, top, width, height) {
     const croppedBase64 = await cropImage(imageToProcess, left, top, width, height);
     
     loadingPopup.querySelector('.vopet-loading-text').textContent = '텍스트 추출 중...';
-    const extractedText = await extractTextFromImage(croppedBase64, selectedOCRLanguage);
+    const extractedText = await extractTextFromImage(croppedBase64, ocrLanguage);
     
     console.log('🔵 [DEBUG] OCR 추출 결과:', extractedText);
-    console.log('🔵 [DEBUG] 선택된 OCR 언어:', selectedOCRLanguage);
+    console.log('🔵 [DEBUG] 선택된 OCR 언어:', ocrLanguage);
     
     if (!extractedText || extractedText.trim().length === 0) {
       loadingPopup.remove();
@@ -269,7 +210,7 @@ async function cropAndTranslate(left, top, width, height) {
     
     // 사용자가 선택한 OCR 언어를 원문 언어로 간주
     const langCodeMap = { eng: 'en', jpn: 'ja', kor: 'ko' };
-    const sourceLang = langCodeMap[selectedOCRLanguage] || 'en';
+    const sourceLang = langCodeMap[ocrLanguage] || 'en';
     
     console.log('🔵 [DEBUG] sourceLang:', sourceLang, '/ targetLanguage:', targetLanguage);
     
@@ -285,12 +226,40 @@ async function cropAndTranslate(left, top, width, height) {
     
     console.log('🔵 [DEBUG] 팝업에 전달: 원문=', extractedText, '/ 번역=', translatedText);
     
+    // 후리가나 가져오기 (일본어인 경우)
+    let furigana = null;
+    if (sourceLang === 'ja' && typeof isShortKanjiWord !== 'undefined' && isShortKanjiWord(extractedText)) {
+      if (typeof getFurigana !== 'undefined') {
+        furigana = await getFurigana(extractedText, sourceLang);
+      }
+    } else if (targetLanguage === 'ja' && translatedText && typeof isShortKanjiWord !== 'undefined' && isShortKanjiWord(translatedText)) {
+      if (typeof getFurigana !== 'undefined') {
+        furigana = await getFurigana(translatedText, 'ja');
+      }
+    }
+    
+    // 번역 기록 저장 (번역이 있을 때만)
+    if (translatedText) {
+      saveScreenshotTranslationToChat(extractedText, translatedText, targetLanguage, sourceLang);
+    }
+    
     loadingPopup.remove();
-    showScreenshotPopup(extractedText, translatedText);
+    showScreenshotPopup(extractedText, translatedText, sourceLang, targetLanguage, furigana);
     
   } catch (error) {
     loadingPopup.remove();
-    showErrorPopup(error.message || '알 수 없는 오류');
+    
+    // Rate limit 에러인 경우 친절한 메시지 표시
+    if (error.message === 'OCR_API_RATE_LIMIT') {
+      showErrorPopup(
+        'OCR API 사용 한도에 도달했습니다.\n\n' +
+        '무료 플랜은 10분에 10번만 요청할 수 있습니다.\n' +
+        '잠시 후 다시 시도해주세요.\n\n' +
+        '더 많은 요청이 필요하시면 OCR.space에서 유료 플랜을 이용하세요.'
+      );
+    } else {
+      showErrorPopup(error.message || '알 수 없는 오류');
+    }
   }
 }
 
@@ -329,12 +298,26 @@ function cropImage(imageDataUrl, left, top, width, height) {
  */
 async function extractTextFromImage(base64Image, language) {
   // Engine 2 먼저 시도
-  let result = await tryOCR(base64Image, '2', language);
-  if (result) return result;
+  try {
+    let result = await tryOCR(base64Image, '2', language);
+    if (result) return result;
+  } catch (error) {
+    if (error.message === 'OCR_API_RATE_LIMIT') {
+      throw error; // Rate limit 에러는 바로 전달
+    }
+    console.warn('OCR Engine 2 실패:', error);
+  }
   
   // Engine 1로 재시도
-  result = await tryOCR(base64Image, '1', language);
-  if (result) return result;
+  try {
+    let result = await tryOCR(base64Image, '1', language);
+    if (result) return result;
+  } catch (error) {
+    if (error.message === 'OCR_API_RATE_LIMIT') {
+      throw error; // Rate limit 에러는 바로 전달
+    }
+    console.warn('OCR Engine 1 실패:', error);
+  }
   
   throw new Error('텍스트를 찾을 수 없습니다.');
 }
@@ -363,6 +346,12 @@ async function tryOCR(base64Image, engine, language) {
     if (!response.ok) {
       const errorText = await response.text();
       console.log('🔴 [OCR] 응답 실패:', errorText);
+      
+      // Rate limit 에러인 경우 특별 처리
+      if (response.status === 403 && errorText.includes('maximum 10 number of times')) {
+        throw new Error('OCR_API_RATE_LIMIT');
+      }
+      
       return null;
     }
     
@@ -500,10 +489,240 @@ function showErrorPopup(message) {
   popup.querySelector('#vopet-error-close').addEventListener('click', () => popup.remove());
 }
 
-function showScreenshotPopup(originalText, translatedText) {
+/**
+ * CSV 파일에 저장
+ */
+function saveToCSV(word, translation, furigana, saveButton, timeoutId) {
+  chrome.storage.local.get(['syncedFileName', 'syncedFileContent'], function(fileData) {
+    if (!fileData.syncedFileName) {
+      clearTimeout(timeoutId);
+      saveButton.disabled = false;
+      saveButton.textContent = '💾 CSV 저장';
+      saveButton.style.background = '#fff';
+      saveButton.style.color = '#000';
+      alert('연동된 파일이 없습니다. 설정에서 파일을 선택해주세요.');
+      return;
+    }
+    
+    if (fileData.syncedFileName.endsWith('.numbers')) {
+      clearTimeout(timeoutId);
+      saveButton.disabled = false;
+      saveButton.textContent = '💾 CSV 저장';
+      saveButton.style.background = '#fff';
+      saveButton.style.color = '#000';
+      alert('Numbers 파일은 CSV로 내보낸 후 사용해주세요.');
+      return;
+    }
+    
+    if (!fileData.syncedFileContent) {
+      clearTimeout(timeoutId);
+      saveButton.disabled = false;
+      saveButton.textContent = '💾 CSV 저장';
+      saveButton.style.background = '#fff';
+      saveButton.style.color = '#000';
+      alert('파일 내용을 읽을 수 없습니다. 파일을 다시 선택해주세요.');
+      return;
+    }
+    
+    // CSV 처리
+    let csvContent = fileData.syncedFileContent;
+    
+    // BOM 제거 (UTF-8 BOM: \uFEFF)
+    if (csvContent && csvContent.length > 0 && csvContent.charCodeAt(0) === 0xFEFF) {
+      csvContent = csvContent.slice(1);
+    }
+    
+    // 앞뒤 공백 및 줄바꿈 제거
+    csvContent = csvContent.trim();
+    
+    // 모든 줄을 분리
+    const allLines = csvContent.split(/\r?\n/);
+    
+    // 빈 줄 제거하고 각 줄의 앞뒤 공백 제거
+    const cleanLines = allLines
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+    
+    let hasHeader = false;
+    let headerLine = '';
+    let dataLines = [];
+    
+    if (cleanLines.length === 0) {
+      headerLine = '순서,단어,발음,뜻';
+      hasHeader = true;
+    } else {
+      const firstLine = cleanLines[0].toLowerCase();
+      hasHeader = firstLine.includes('순서') || firstLine.includes('단어') || firstLine.includes('뜻') || firstLine.includes('발음') || firstLine.includes('후리가나');
+      
+      if (hasHeader) {
+        headerLine = cleanLines[0];
+        // 기존 헤더에 발음 컬럼이 없으면 추가
+        if (!firstLine.includes('발음') && !firstLine.includes('후리가나')) {
+          // 기존 헤더 구조에 따라 발음 컬럼 추가
+          const headerParts = headerLine.split(',');
+          if (headerParts.length === 3) {
+            headerParts.splice(2, 0, '발음');
+            headerLine = headerParts.join(',');
+          }
+        }
+        dataLines = cleanLines.slice(1);
+      } else {
+        headerLine = '순서,단어,발음,뜻';
+        dataLines = cleanLines;
+        hasHeader = true;
+      }
+    }
+    
+    // CSV 필드 이스케이프
+    function escapeCsvField(field) {
+      if (!field) return '';
+      const str = String(field);
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    }
+    
+    // 순서 번호 계산
+    let maxNumber = 0;
+    dataLines.forEach(line => {
+      const trimmedLine = line.trim();
+      if (trimmedLine) {
+        const match = trimmedLine.match(/^(\d+),/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > maxNumber) {
+            maxNumber = num;
+          }
+        }
+      }
+    });
+    
+    const newLineNumber = maxNumber + 1;
+    
+    // 기존 데이터가 3컬럼 형식이면 발음 컬럼 추가 필요
+    if (dataLines.length > 0) {
+      const firstDataLine = dataLines[0].trim();
+      const fields = firstDataLine.match(/("(?:[^"]|"")*"|[^,]+)(?=\s*,|\s*$)/g);
+      if (fields && fields.length === 3) {
+        // 기존이 3컬럼이면 모든 데이터에 빈 발음 컬럼 추가
+        dataLines = dataLines.map(line => {
+          const lineFields = line.match(/("(?:[^"]|"")*"|[^,]+)(?=\s*,|\s*$)/g);
+          if (lineFields && lineFields.length === 3) {
+            lineFields.splice(2, 0, '""');
+            return lineFields.join(',');
+          }
+          return line;
+        });
+      }
+    }
+    
+    const newLine = `${newLineNumber},"${escapeCsvField(word)}","${escapeCsvField(furigana)}","${escapeCsvField(translation)}"`;
+    
+    dataLines.push(newLine);
+    
+    csvContent = headerLine;
+    if (dataLines.length > 0) {
+      csvContent += '\n' + dataLines.join('\n');
+    }
+    
+    // 파일 내용 업데이트
+    chrome.storage.local.set({ syncedFileContent: csvContent }, function() {
+      // background.js에 저장 요청
+      chrome.runtime.sendMessage({
+        action: 'saveWordToFile',
+        word: word,
+        translation: translation
+      }, function(response) {
+        clearTimeout(timeoutId);
+        saveButton.disabled = false;
+        saveButton.textContent = '💾 CSV 저장';
+        saveButton.style.background = '#fff';
+        saveButton.style.color = '#000';
+        
+        if (chrome.runtime.lastError) {
+          alert('CSV 저장 중 오류가 발생했습니다: ' + chrome.runtime.lastError.message);
+          return;
+        }
+        
+        if (response && response.success) {
+          saveButton.textContent = '✓ 저장됨';
+          saveButton.style.background = '#000';
+          saveButton.style.color = '#fff';
+          setTimeout(() => {
+            saveButton.textContent = '💾 CSV 저장';
+            saveButton.style.background = '#fff';
+            saveButton.style.color = '#000';
+          }, 2000);
+        } else {
+          alert('CSV 저장에 실패했습니다: ' + (response?.error || '알 수 없는 오류'));
+        }
+      });
+    });
+  });
+}
+
+/**
+ * 스크린샷 번역 기록 저장
+ */
+function saveScreenshotTranslationToChat(original, translated, targetLanguage, sourceLanguage) {
+  try {
+    // 현재 시간 생성
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    
+    // 번역 기록 객체 생성
+    const translationRecord = {
+      original: original,
+      translated: translated,
+      sourceLanguage: sourceLanguage || 'en',
+      targetLanguage: targetLanguage || 'ko',
+      translatorService: 'screenshot',
+      timestamp: timestamp
+    };
+    
+    // 기존 번역 기록 불러오기
+    chrome.storage.local.get(['translations'], function(result) {
+      const translations = result.translations || [];
+      
+      // 중복 체크: 같은 원본과 번역이 이미 있는지 확인
+      const isDuplicate = translations.some(t => 
+        t.original === original && t.translated === translated
+      );
+      
+      if (!isDuplicate) {
+        // 새 번역 기록 추가 (최대 100개까지만 저장)
+        translations.push(translationRecord);
+        if (translations.length > 100) {
+          translations.shift(); // 가장 오래된 기록 제거
+        }
+        
+        // 저장
+        chrome.storage.local.set({ translations: translations }, function() {
+          // Chat 화면이 열려있으면 업데이트
+          const chatList = document.getElementById('chat-translations-list');
+          if (chatList) {
+            // 기존 내용 제거하고 다시 로드
+            chatList.innerHTML = '';
+            if (typeof loadTranslations === 'function') {
+              loadTranslations(chatList);
+            } else if (typeof window.loadTranslations === 'function') {
+              window.loadTranslations(chatList);
+            }
+          }
+        });
+      }
+    });
+  } catch (error) {
+    console.error('스크린샷 번역 기록 저장 오류:', error);
+  }
+}
+
+function showScreenshotPopup(originalText, translatedText, sourceLang, targetLanguage, furigana = null) {
   console.log('🟣 [POPUP] showTranslationPopup 호출됨');
   console.log('🟣 [POPUP] 원문:', originalText);
   console.log('🟣 [POPUP] 번역:', translatedText);
+  console.log('🟣 [POPUP] 후리가나:', furigana);
   
   // 기존 스크린샷 팝업 제거
   document.getElementById('vopet-screenshot-translation-popup')?.remove();
@@ -542,8 +761,22 @@ function showScreenshotPopup(originalText, translatedText) {
           <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-left: 3px solid #000;">${escapeHtml(originalText)}</div>
         </div>
         <div style="padding-top: 20px; border-top: 1px solid #e0e0e0;">
-          <div style="font-size: 11px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">번역</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">번역</div>
+            <button id="vopet-screenshot-save-btn" data-word="${escapeHtml(originalText)}" data-translation="${escapeHtml(translatedText)}" data-furigana="${escapeHtml(furigana ? furigana.replace(/^\[|\]$/g, '') : '')}" style="
+              background: #fff;
+              color: #000;
+              border: 1px solid #000;
+              padding: 6px 12px;
+              font-size: 11px;
+              border-radius: 0;
+              cursor: pointer;
+              font-weight: 500;
+              transition: background 0.2s;
+            ">💾 CSV 저장</button>
+          </div>
           <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-left: 3px solid #000;">${escapeHtml(translatedText)}</div>
+          ${furigana ? `<small style="display: block; margin-top: 8px; color: #666; font-size: 12px; font-style: italic;">${escapeHtml(furigana)}</small>` : ''}
         </div>
       ` : `
         <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap;">${escapeHtml(originalText)}</div>
@@ -559,6 +792,50 @@ function showScreenshotPopup(originalText, translatedText) {
     popup.remove();
   });
   
+  // CSV 저장 버튼 이벤트 (번역이 있을 때만)
+  if (hasTranslation) {
+    const saveButton = popup.querySelector('#vopet-screenshot-save-btn');
+    if (saveButton) {
+      saveButton.addEventListener('mouseenter', function() {
+        this.style.background = '#000';
+        this.style.color = '#fff';
+      });
+      saveButton.addEventListener('mouseleave', function() {
+        this.style.background = '#fff';
+        this.style.color = '#000';
+      });
+      
+      saveButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        const word = this.getAttribute('data-word');
+        const translation = this.getAttribute('data-translation');
+        const furigana = this.getAttribute('data-furigana') || '';
+        
+        console.log('스크린샷 CSV 저장 버튼 클릭:', { word, translation, furigana });
+        
+        // 버튼 비활성화 (중복 클릭 방지)
+        saveButton.disabled = true;
+        saveButton.textContent = '저장 중...';
+        saveButton.style.background = '#6c757d';
+        
+        // 타임아웃 설정 (10초 후 자동 복구)
+        const timeoutId = setTimeout(() => {
+          console.warn('저장 타임아웃 - 버튼 복구');
+          saveButton.disabled = false;
+          saveButton.textContent = '💾 CSV 저장';
+          saveButton.style.background = '#fff';
+          saveButton.style.color = '#000';
+          alert('저장이 시간 초과되었습니다. 다시 시도해주세요.');
+        }, 10000);
+        
+        // CSV 저장 요청
+        saveToCSV(word, translation, furigana, saveButton, timeoutId);
+      });
+    }
+  }
+  
   document.addEventListener('keydown', function esc(e) {
     if (e.key === 'Escape') {
       popup.remove();
@@ -569,7 +846,6 @@ function showScreenshotPopup(originalText, translatedText) {
 
 // 전역 함수
 window.vopetScreenshotTranslation = {
-  showLanguageSelector: showLanguageSelector
+  startCaptureMode: startCaptureMode
 };
 
-console.log('✅ VoPet 화면 캡처 번역 기능 로드됨');

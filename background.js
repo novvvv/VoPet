@@ -175,9 +175,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
   
   if (request.action === 'saveWordToFile') {
-    const { word, translation } = request;
+    const { word, translation, furigana = '' } = request;
     
-    console.log('파일에 단어 저장 요청 받음:', { word, translation });
+    console.log('파일에 단어 저장 요청 받음:', { word, translation, furigana });
     console.log('sender:', sender);
     
     // 비동기 처리
@@ -220,24 +220,59 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           if (lines.length > 0) {
             // 첫 줄이 헤더인지 확인 (순서, 단어, 뜻 등의 키워드 포함)
             const firstLine = lines[0].toLowerCase();
-            if (firstLine.includes('순서') || firstLine.includes('단어') || firstLine.includes('뜻')) {
+            if (firstLine.includes('순서') || firstLine.includes('단어') || firstLine.includes('뜻') || firstLine.includes('발음') || firstLine.includes('후리가나')) {
               hasHeader = true;
               header = lines[0];
+              // 기존 헤더에 발음 컬럼이 없으면 추가
+              if (!firstLine.includes('발음') && !firstLine.includes('후리가나')) {
+                const headerParts = header.split(',');
+                if (headerParts.length === 3) {
+                  headerParts.splice(2, 0, '발음');
+                  header = headerParts.join(',');
+                }
+              }
             }
           }
           
+          // 기존 데이터 라인 가져오기
+          const dataLines = lines.slice(hasHeader ? 1 : 0).filter(line => line.trim());
+          
           // 헤더가 없으면 추가
           if (!hasHeader) {
-            header = '순서,단어,뜻';
-            csvContent = header + '\n' + csvContent;
+            header = '순서,단어,발음,뜻';
           }
           
-          // 새 단어 추가 (순서는 기존 라인 수)
-          const newLineNumber = lines.length > (hasHeader ? 1 : 0) ? lines.length : 1;
-          const newLine = `${newLineNumber},"${escapeCsvField(word)}","${escapeCsvField(translation)}"`;
+          // 기존 데이터가 3컬럼 형식이면 발음 컬럼 추가 필요
+          if (dataLines.length > 0) {
+            const firstDataLine = dataLines[0].trim();
+            const fields = firstDataLine.match(/("(?:[^"]|"")*"|[^,]+)(?=\s*,|\s*$)/g);
+            if (fields && fields.length === 3) {
+              // 기존이 3컬럼이면 모든 데이터에 빈 발음 컬럼 추가
+              dataLines.forEach((line, index) => {
+                const lineFields = line.match(/("(?:[^"]|"")*"|[^,]+)(?=\s*,|\s*$)/g);
+                if (lineFields && lineFields.length === 3) {
+                  lineFields.splice(2, 0, '""');
+                  dataLines[index] = lineFields.join(',');
+                }
+              });
+            }
+          }
           
-          // CSV에 추가
-          csvContent += '\n' + newLine;
+          // 순서 번호 계산
+          let maxNumber = 0;
+          dataLines.forEach(line => {
+            const match = line.match(/^(\d+),/);
+            if (match) {
+              const num = parseInt(match[1], 10);
+              if (num > maxNumber) maxNumber = num;
+            }
+          });
+          const newLineNumber = maxNumber + 1;
+          const newLine = `${newLineNumber},"${escapeCsvField(word)}","${escapeCsvField(furigana)}","${escapeCsvField(translation)}"`;
+          
+          // CSV 재구성 (헤더 + 데이터 + 새 라인)
+          dataLines.push(newLine);
+          csvContent = header + '\n' + dataLines.join('\n');
           
           console.log('CSV 내용 업데이트 완료, 라인 수:', csvContent.split('\n').length);
           
