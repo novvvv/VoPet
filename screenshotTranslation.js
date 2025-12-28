@@ -710,6 +710,15 @@ function saveScreenshotTranslationToChat(original, translated, targetLanguage, s
               window.loadTranslations(chatList);
             }
           }
+          // 사이드바도 업데이트
+          const sidebarList = document.getElementById('vopet-sidebar-translations-list');
+          if (sidebarList && typeof loadSidebarTranslations === 'function') {
+            sidebarList.innerHTML = '';
+            loadSidebarTranslations(sidebarList);
+          } else if (sidebarList && typeof window.loadSidebarTranslations === 'function') {
+            sidebarList.innerHTML = '';
+            window.loadSidebarTranslations(sidebarList);
+          }
         });
       }
     });

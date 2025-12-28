@@ -125,6 +125,26 @@ window.vopetStatus = {
   version: '1.0'
 };
 
+// 번역 기록 사이드바 초기화
+if (typeof createTranslationSidebar === 'function') {
+  // DOM이 완전히 로드된 후 사이드바 생성
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(createTranslationSidebar, 500);
+    });
+  } else {
+    setTimeout(createTranslationSidebar, 500);
+  }
+} else if (typeof window.createTranslationSidebar === 'function') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(window.createTranslationSidebar, 500);
+    });
+  } else {
+    setTimeout(window.createTranslationSidebar, 500);
+  }
+}
+
 // Background Script 깨우기 - Service Worker가 비활성화되지 않도록 (강화)
 (function wakeUpBackgroundScript() {
   const wakeUp = () => {
@@ -1847,6 +1867,15 @@ function saveTranslationToChat(original, translated, targetLanguage, translatorS
               } else if (typeof window.loadTranslations === 'function') {
                 window.loadTranslations(chatList);
               }
+            }
+            // 사이드바도 업데이트
+            const sidebarList = document.getElementById('vopet-sidebar-translations-list');
+            if (sidebarList && typeof loadSidebarTranslations === 'function') {
+              sidebarList.innerHTML = '';
+              loadSidebarTranslations(sidebarList);
+            } else if (sidebarList && typeof window.loadSidebarTranslations === 'function') {
+              sidebarList.innerHTML = '';
+              window.loadSidebarTranslations(sidebarList);
             }
           });
         }
