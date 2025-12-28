@@ -209,7 +209,7 @@ document.addEventListener('mouseup', function(event) {
     // ** 단순 클릭 했을 때 팝업 표시를 방지 ** 
     if (text && text.length > 0) {
       selectedText = text; // 선택된 텍스트 저장
-      showTranslationPopup(event, text); // 팝업 표시
+      showDragTranslationPopup(event, text); // 팝업 표시
     }
     
     isDragging = false; // 드래그 상태 초기화
@@ -270,39 +270,23 @@ document.addEventListener('mouseup', function(e) {
           clientY: rect.top + rect.height / 2,
           target: selection.anchorNode.parentElement
         };
-        showTranslationPopup(mockEvent, text);
+        showDragTranslationPopup(mockEvent, text);
       }
     }
   }, 50);
 });
 
 
-// -- [Function] 팝업 표시 함수 -- //
-function showTranslationPopup(event, text) {
-
-  // [Exception] 기존 팝업 제거
+// -- [Function] 드래그 팝업 표시 함수 -- //
+// 로딩 상태를 표시하고 번역 완료 후 공통 팝업 함수로 결과 표시
+function showDragTranslationPopup(event, text) {
+  // 기존 팝업 제거
   if (currentPopup) {
     currentPopup.remove();
     currentPopup = null;
   }
   
-  // 새 팝업 생성 (화면 캡처 번역과 동일한 스타일)
-  const popup = document.createElement('div');
-  popup.id = 'vopet-translation-popup';
-  popup.style.cssText = `
-    position: fixed;
-    background: #fff;
-    border: 2px solid #000;
-    z-index: 2147483647;
-    max-width: 420px;
-    width: 90%;
-    max-height: 80vh;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  `;
-  
-  // 팝업 위치 설정 (더 안전한 위치 계산)
+  // 위치 계산
   let x = event.clientX || window.innerWidth / 2;
   let y = event.clientY || window.innerHeight / 2;
   
@@ -312,73 +296,51 @@ function showTranslationPopup(event, text) {
   if (y < 100) y = 100;
   if (y > window.innerHeight - 200) y = window.innerHeight - 220;
   
-  popup.style.left = `${x}px`;
-  popup.style.top = `${y - 100}px`;
+  // 로딩 팝업 생성
+  const loadingPopup = document.createElement('div');
+  loadingPopup.id = 'vopet-loading-popup';
+  loadingPopup.style.cssText = `
+    position: fixed;
+    left: ${x}px;
+    top: ${y - 100}px;
+    background: #fff;
+    border: 2px solid #000;
+    z-index: 2147483647;
+    max-width: 420px;
+    width: 90%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  `;
   
-  popup.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #000; background: #000; color: #fff;">
+  loadingPopup.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 2px solid #000; background: #000; color: #fff;">
       <span style="font-size: 13px; font-weight: 600;">번역</span>
       <button class="vopet-close-btn" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #fff;">×</button>
     </div>
-    <div style="padding: 20px; max-height: 60vh; overflow-y: auto;">
-      <div class="vopet-loading" style="text-align: center; color: #666; font-size: 14px;">해석 중...</div>
-      <div class="vopet-result" style="display: none;"></div>
-    </div>
+    <div style="padding: 20px; text-align: center; color: #666; font-size: 14px;">해석 중...</div>
   `;
   
-  document.body.appendChild(popup);
-  currentPopup = popup;
+  document.body.appendChild(loadingPopup);
+  currentPopup = loadingPopup;
   
-  // -- [Function] 닫기 버튼 이벤트 (최강력한 방법) -- //
-  const closeBtn = popup.querySelector('.vopet-close-btn');
-  if (closeBtn) {
-    // 모든 이벤트 차단
-    closeBtn.onclick = function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      
-      // 팝업 강제 제거
-      if (currentPopup) {
-        currentPopup.remove();
-        currentPopup = null;
-      }
-      if (popup && popup.parentNode) {
-        popup.parentNode.removeChild(popup);
-      }
-      
-      // 이벤트 전파 완전 차단
-      return false;
-    };
-    
-    // mousedown 이벤트도 차단
-    closeBtn.onmousedown = function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      return false;
-    };
-    
-    // 추가 이벤트 리스너 (capture 단계에서)
-    closeBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      
-      if (currentPopup) {
-        currentPopup.remove();
-        currentPopup = null;
-      }
-      if (popup && popup.parentNode) {
-        popup.parentNode.removeChild(popup);
-      }
-    }, true);
-  }
+  // 닫기 버튼 이벤트
+  loadingPopup.querySelector('.vopet-close-btn').addEventListener('click', () => {
+    loadingPopup.remove();
+    currentPopup = null;
+  });
   
+  // ESC 키로 닫기
+  const escHandler = (e) => {
+    if (e.key === 'Escape' && currentPopup === loadingPopup) {
+      loadingPopup.remove();
+      currentPopup = null;
+      document.removeEventListener('keydown', escHandler);
+    }
+  };
+  document.addEventListener('keydown', escHandler);
   
-  // 단어 해석 요청
-  translateWord(text);
-  
+  // 번역 요청 (위치 정보 전달)
+  translateWord(text, { x, y });
 }
 
 // Extension context 유효성 확인 헬퍼 함수
@@ -539,8 +501,8 @@ function processFileHandleRequest(getRequest, db, csvContent, fileData, saveButt
   };
 }
 
-// 단어 해석 함수
-async function translateWord(text) {
+// 단어 해석 함수 (공통 팝업 함수 사용)
+async function translateWord(text, position = null) {
   try {
     // Extension context 유효성 확인
     if (!isExtensionContextValid()) {
@@ -556,7 +518,7 @@ async function translateWord(text) {
     });
     const targetLanguage = result.language || 'ko';
     const apiKey = result.apiKey;
-    const translatorService = result.translatorService || 'google-free'; // 기본값: Google 무료 (API 키 불필요)
+    const translatorService = result.translatorService || 'google-free';
     
     let translation = '';
     let furigana = '';
@@ -566,20 +528,17 @@ async function translateWord(text) {
       if (!apiKey) {
         throw new Error('DeepL API 키가 필요합니다. 팝업에서 API 키를 입력해주세요.');
       }
-      // DeepL API 사용
       translation = await translateWithDeepL(text, targetLanguage, apiKey);
     } else if (translatorService === 'google') {
       if (!apiKey) {
         throw new Error('Google Translate API 키가 필요합니다. 팝업에서 API 키를 입력해주세요.');
       }
-      // Google Translate API 사용
       translation = await translateWithGoogleAPI(text, targetLanguage, apiKey);
     } else {
-      // Google Translate 무료 API 사용 (API 키 없이)
       translation = await translateWithGoogleFree(text, targetLanguage);
     }
     
-    // 일본어 관련 후리가나 확인 (한자가 포함된 텍스트)
+    // 일본어 관련 후리가나 확인
     const sourceLang = detectLanguage(text);
     if ((sourceLang === 'ja' || targetLanguage === 'ja') && isShortKanjiWord(text)) {
       if (sourceLang === 'ja') {
@@ -589,409 +548,66 @@ async function translateWord(text) {
       }
     }
     
-    // 결과 표시
-    const resultDiv = currentPopup?.querySelector('.vopet-result');
-    const loadingDiv = currentPopup?.querySelector('.vopet-loading');
-    
-    if (resultDiv && loadingDiv) {
-      loadingDiv.style.display = 'none';
-      resultDiv.style.display = 'block';
-      
-      // 번역 결과가 있는지 확인
-      if (!translation || translation.trim().length === 0) {
-        resultDiv.innerHTML = `
-          <div class="vopet-error">해석을 불러올 수 없습니다</div>
-        `;
-        return;
-      }
-      
-      // 저장 버튼 추가 (파일 연동 여부 확인) - 먼저 확인
-      chrome.storage.local.get(['syncedFileName', 'syncedFileContent'], function(fileResult) {
-        const hasSyncedFile = !!fileResult.syncedFileName;
-        const isNumbers = fileResult.syncedFileName && fileResult.syncedFileName.endsWith('.numbers');
-        const hasCsvContent = !!fileResult.syncedFileContent;
-        const showSaveButton = hasSyncedFile && !isNumbers && hasCsvContent;
-        
-        // 전체 번역 문장 표시 (화면 캡처 번역과 동일한 스타일)
-        let initialHTML = '';
-        if (furigana) {
-          initialHTML = `
-            <div style="margin-bottom: 20px;">
-              <div style="font-size: 11px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">원문</div>
-              <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-left: 3px solid #000;">${escapeHtml(text)}</div>
-            </div>
-            <div style="margin-bottom: 20px;">
-              <div style="font-size: 11px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">후리가나</div>
-              <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f0f8ff; padding: 12px; border-left: 3px solid #4169e1;">${escapeHtml(furigana.replace(/^\[|\]$/g, ''))}</div>
-            </div>
-            <div style="padding-top: 20px; border-top: 1px solid #e0e0e0;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <div style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">번역</div>
-                ${showSaveButton ? `<button class="vopet-save-to-file-btn" data-word="${escapeHtml(text)}" data-translation="${escapeHtml(translation)}" data-furigana="${escapeHtml(furigana ? furigana.replace(/^\[|\]$/g, '') : '')}" style="
-                  background: #fff;
-                  color: #000;
-                  border: 1px solid #000;
-                  padding: 6px 12px;
-                  font-size: 11px;
-                  border-radius: 0;
-                  cursor: pointer;
-                  font-weight: 500;
-                  transition: background 0.2s;
-                ">💾 CSV 저장</button>` : ''}
-              </div>
-              <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-left: 3px solid #000;">${escapeHtml(translation)}</div>
-            </div>
-          `;
-        } else {
-          initialHTML = `
-            <div style="margin-bottom: 20px;">
-              <div style="font-size: 11px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">원문</div>
-              <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-left: 3px solid #000;">${escapeHtml(text)}</div>
-            </div>
-            <div style="padding-top: 20px; border-top: 1px solid #e0e0e0;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <div style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">번역</div>
-                ${showSaveButton ? `<button class="vopet-save-to-file-btn" data-word="${escapeHtml(text)}" data-translation="${escapeHtml(translation)}" data-furigana="" style="
-                  background: #fff;
-                  color: #000;
-                  border: 1px solid #000;
-                  padding: 6px 12px;
-                  font-size: 11px;
-                  border-radius: 0;
-                  cursor: pointer;
-                  font-weight: 500;
-                  transition: background 0.2s;
-                ">💾 CSV 저장</button>` : ''}
-              </div>
-              <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-left: 3px solid #000;">${escapeHtml(translation)}</div>
-            </div>
-          `;
-        }
-        
-        if (hasSyncedFile && isNumbers) {
-          initialHTML += `
-            <div style="margin-top: 12px; text-align: center; padding: 8px; background: #f5f5f5; border: 1px solid #000; border-radius: 0;">
-              <small style="color: #000; font-size: 11px;">Numbers 파일은 CSV로 변환 후 사용해주세요</small>
-            </div>
-          `;
-        }
-        
-        resultDiv.innerHTML = initialHTML;
-        
-        // 저장 버튼 이벤트 리스너
-        const saveButton = resultDiv.querySelector('.vopet-save-to-file-btn');
-        if (saveButton) {
-          // 호버 효과 (흑백 모노톤)
-          saveButton.addEventListener('mouseenter', function() {
-            this.style.background = '#000';
-            this.style.color = '#fff';
-          });
-          saveButton.addEventListener('mouseleave', function() {
-            this.style.background = '#fff';
-            this.style.color = '#000';
-          });
-          
-            // 클릭 이벤트
-            saveButton.addEventListener('click', function(e) {
-              e.stopPropagation();
-              e.preventDefault();
-              
-              const word = this.getAttribute('data-word');
-              const translation = this.getAttribute('data-translation');
-              const furigana = this.getAttribute('data-furigana') || '';
-              
-              console.log('저장 버튼 클릭:', { word, translation, furigana });
-              
-              // 버튼 비활성화 (중복 클릭 방지)
-              saveButton.disabled = true;
-              saveButton.textContent = '저장 중...';
-              saveButton.style.background = '#6c757d';
-              
-              // 타임아웃 설정 (10초 후 자동 복구)
-              const timeoutId = setTimeout(() => {
-                console.warn('저장 타임아웃 - 버튼 복구');
-                saveButton.disabled = false;
-                saveButton.textContent = '💾 저장';
-                saveButton.style.background = '#fff';
-                saveButton.style.color = '#000';
-                alert('저장이 시간 초과되었습니다. 다시 시도해주세요.');
-              }, 10000);
-            
-            // 저장 요청 - 직접 처리 (background script 우회)
-            console.log('파일 저장 시작:', { word, translation });
-            
-            // chrome.storage에서 파일 정보 가져오기
-            chrome.storage.local.get(['syncedFileName', 'syncedFileContent'], function(fileData) {
-              console.log('파일 데이터:', fileData);
-              
-              if (!fileData.syncedFileName) {
-                clearTimeout(timeoutId);
-                saveButton.disabled = false;
-                saveButton.textContent = '💾 저장';
-                saveButton.style.background = '#fff';
-                saveButton.style.color = '#000';
-                alert('연동된 파일이 없습니다. 설정에서 파일을 선택해주세요.');
-                return;
-              }
-              
-              if (fileData.syncedFileName.endsWith('.numbers')) {
-                clearTimeout(timeoutId);
-                saveButton.disabled = false;
-                saveButton.textContent = '💾 저장';
-                saveButton.style.background = '#fff';
-                saveButton.style.color = '#000';
-                alert('Numbers 파일은 CSV로 내보낸 후 사용해주세요.');
-                return;
-              }
-              
-              if (!fileData.syncedFileContent) {
-                clearTimeout(timeoutId);
-                saveButton.disabled = false;
-                saveButton.textContent = '💾 저장';
-                saveButton.style.background = '#fff';
-                saveButton.style.color = '#000';
-                alert('파일 내용을 읽을 수 없습니다. 파일을 다시 선택해주세요.');
-                return;
-              }
-              
-              // CSV 처리
-              let csvContent = fileData.syncedFileContent;
-              
-              // BOM 제거 (UTF-8 BOM: \uFEFF)
-              if (csvContent && csvContent.length > 0 && csvContent.charCodeAt(0) === 0xFEFF) {
-                csvContent = csvContent.slice(1);
-              }
-              
-              // 앞뒤 공백 및 줄바꿈 제거
-              csvContent = csvContent.trim();
-              
-              // 모든 줄을 분리
-              const allLines = csvContent.split(/\r?\n/);
-              
-              // 빈 줄 제거하고 각 줄의 앞뒤 공백 제거
-              const cleanLines = allLines
-                .map(line => line.trim())
-                .filter(line => line.length > 0);
-              
-              let hasHeader = false;
-              let headerLine = '';
-              let dataLines = [];
-              
-              if (cleanLines.length === 0) {
-                // 완전히 빈 파일인 경우
-                headerLine = '순서,단어,발음,뜻';
-                hasHeader = true;
-              } else {
-                // 첫 줄이 헤더인지 확인
-                const firstLine = cleanLines[0].toLowerCase();
-                hasHeader = firstLine.includes('순서') || firstLine.includes('단어') || firstLine.includes('뜻') || firstLine.includes('발음') || firstLine.includes('후리가나');
-                
-                if (hasHeader) {
-                  headerLine = cleanLines[0];
-                  // 기존 헤더에 발음 컬럼이 없으면 추가
-                  if (!firstLine.includes('발음') && !firstLine.includes('후리가나')) {
-                    // 기존 헤더 구조에 따라 발음 컬럼 추가
-                    // "순서,단어,뜻" -> "순서,단어,발음,뜻"
-                    const headerParts = headerLine.split(',');
-                    if (headerParts.length === 3) {
-                      headerParts.splice(2, 0, '발음');
-                      headerLine = headerParts.join(',');
-                    }
-                  }
-                  dataLines = cleanLines.slice(1);
-                } else {
-                  // 헤더가 없으면 추가
-                  headerLine = '순서,단어,발음,뜻';
-                  dataLines = cleanLines;
-                  hasHeader = true;
-                }
-              }
-              
-              // CSV 필드 이스케이프
-              function escapeCsvField(field) {
-                if (!field) return '';
-                const str = String(field);
-                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-                  return '"' + str.replace(/"/g, '""') + '"';
-                }
-                return str;
-              }
-              
-              // 순서 번호 계산: 기존 데이터에서 가장 큰 번호 찾기
-              let maxNumber = 0;
-              dataLines.forEach(line => {
-                const trimmedLine = line.trim();
-                if (trimmedLine) {
-                  // 첫 번째 필드(순서 번호) 추출
-                  const match = trimmedLine.match(/^(\d+),/);
-                  if (match) {
-                    const num = parseInt(match[1], 10);
-                    if (num > maxNumber) {
-                      maxNumber = num;
-                    }
-                  }
-                }
-              });
-              
-              // 새 순서 번호는 기존 최대값 + 1 (데이터가 없으면 1부터 시작)
-              const newLineNumber = maxNumber + 1;
-              
-              // 기존 데이터가 3컬럼 형식이면 발음 컬럼 추가 필요
-              // 기존 데이터 형식 확인 (첫 번째 데이터 라인으로)
-              if (dataLines.length > 0) {
-                const firstDataLine = dataLines[0].trim();
-                // CSV 파싱: 쉼표로 분리 (큰따옴표 안의 쉼표는 무시)
-                const fields = firstDataLine.match(/("(?:[^"]|"")*"|[^,]+)(?=\s*,|\s*$)/g);
-                if (fields && fields.length === 3) {
-                  // 기존이 3컬럼이면 모든 데이터에 빈 발음 컬럼 추가
-                  dataLines = dataLines.map(line => {
-                    const lineFields = line.match(/("(?:[^"]|"")*"|[^,]+)(?=\s*,|\s*$)/g);
-                    if (lineFields && lineFields.length === 3) {
-                      lineFields.splice(2, 0, '""');
-                      return lineFields.join(',');
-                    }
-                    return line;
-                  });
-                }
-              }
-              
-              const newLine = `${newLineNumber},"${escapeCsvField(word)}","${escapeCsvField(furigana)}","${escapeCsvField(translation)}"`;
-              
-              // 새 데이터 추가
-              dataLines.push(newLine);
-              
-              // CSV 재구성 (헤더 + 데이터, 빈 줄 없이)
-              csvContent = headerLine;
-              if (dataLines.length > 0) {
-                csvContent += '\n' + dataLines.join('\n');
-              }
-              
-              // 파일 내용 업데이트
-              chrome.storage.local.set({ syncedFileContent: csvContent }, function() {
-                console.log('CSV 내용 저장 완료, 파일 핸들 찾는 중...');
-                
-                // IndexedDB에서 파일 핸들 가져오기
-                const dbName = 'vopet_file_handles';
-                const request = indexedDB.open(dbName, 1);
-                
-                request.onerror = () => {
-                  console.error('IndexedDB 열기 오류:', request.error);
-                  clearTimeout(timeoutId);
-                  saveButton.disabled = false;
-                  saveButton.textContent = '💾 저장';
-                  saveButton.style.background = '#fff';
-                  saveButton.style.color = '#000';
-                  alert('파일 저장 중 오류가 발생했습니다: ' + request.error.message);
-                };
-                
-                request.onupgradeneeded = (event) => {
-                  const db = event.target.result;
-                  if (!db.objectStoreNames.contains('fileHandles')) {
-                    db.createObjectStore('fileHandles', { keyPath: 'id' });
-                  }
-                };
-                
-                request.onsuccess = async () => {
-                  console.log('IndexedDB 열기 성공');
-                  const db = request.result;
-                  
-                  try {
-                    // object store가 존재하는지 확인
-                    if (!db.objectStoreNames.contains('fileHandles')) {
-                      console.warn('fileHandles object store가 없습니다. 데이터베이스를 재생성합니다.');
-                      db.close();
-                      // 데이터베이스 삭제 후 다시 생성
-                      const deleteRequest = indexedDB.deleteDatabase(dbName);
-                      deleteRequest.onsuccess = () => {
-                        console.log('데이터베이스 삭제 완료, 재생성 중...');
-                        const recreateRequest = indexedDB.open(dbName, 1);
-                        recreateRequest.onupgradeneeded = (event) => {
-                          const newDb = event.target.result;
-                          if (!newDb.objectStoreNames.contains('fileHandles')) {
-                            newDb.createObjectStore('fileHandles', { keyPath: 'id' });
-                          }
-                        };
-                        recreateRequest.onsuccess = () => {
-                          const newDb = recreateRequest.result;
-                          const transaction = newDb.transaction(['fileHandles'], 'readonly');
-                          const store = transaction.objectStore('fileHandles');
-                          const getRequest = store.get('current');
-                          processFileHandleRequest(getRequest, newDb, csvContent, fileData, saveButton, timeoutId);
-                        };
-                        recreateRequest.onerror = () => {
-                          console.error('데이터베이스 재생성 오류:', recreateRequest.error);
-                          clearTimeout(timeoutId);
-                          saveButton.disabled = false;
-                          saveButton.textContent = '💾 저장';
-                          saveButton.style.background = '#fff';
-                          saveButton.style.color = '#000';
-                          alert('파일 저장 중 오류가 발생했습니다: ' + recreateRequest.error.message);
-                        };
-                      };
-                      deleteRequest.onerror = () => {
-                        console.error('데이터베이스 삭제 오류:', deleteRequest.error);
-                        clearTimeout(timeoutId);
-                        saveButton.disabled = false;
-                        saveButton.textContent = '💾 저장';
-                        saveButton.style.background = '#fff';
-                        saveButton.style.color = '#000';
-                        alert('파일 저장 중 오류가 발생했습니다: ' + deleteRequest.error.message);
-                      };
-                      return;
-                    }
-                    
-                    const transaction = db.transaction(['fileHandles'], 'readonly');
-                    const store = transaction.objectStore('fileHandles');
-                    const getRequest = store.get('current');
-                    
-                    processFileHandleRequest(getRequest, db, csvContent, fileData, saveButton, timeoutId);
-                  } catch (error) {
-                    console.error('트랜잭션 오류:', error);
-                    clearTimeout(timeoutId);
-                    saveButton.disabled = false;
-                    saveButton.textContent = '💾 저장';
-                    saveButton.style.background = '#fff';
-                    saveButton.style.color = '#000';
-                    alert('파일 저장 중 오류가 발생했습니다: ' + error.message);
-                  }
-                };
-              });
-            });
-            
-            // 타임아웃 ID를 버튼에 저장 (나중에 clearTimeout 사용)
-            saveButton._timeoutId = timeoutId;
-          });
-        }
-      });
-      
-      // 번역 기록 저장 (한 번만)
-      saveTranslationToChat(text, translation, targetLanguage, translatorService, sourceLang, furigana);
+    // 로딩 팝업 제거
+    if (currentPopup && currentPopup.id === 'vopet-loading-popup') {
+      currentPopup.remove();
+      currentPopup = null;
     }
+    
+    // 공통 팝업 함수로 결과 표시
+    const cleanFurigana = furigana ? furigana.replace(/^\[|\]$/g, '') : '';
+    
+    if (typeof window.showTranslationPopup === 'function') {
+      const popup = window.showTranslationPopup(
+        text,
+        translation || null,
+        sourceLang,
+        targetLanguage,
+        cleanFurigana || null,
+        'vopet-translation-popup',
+        position || 'center'
+      );
+      currentPopup = popup;
+      
+      // 번역 기록 저장
+      if (translation && translation.trim().length > 0) {
+        saveTranslationToChat(text, translation, targetLanguage, translatorService, sourceLang, cleanFurigana);
+      }
+    } else {
+      console.error('showTranslationPopup 함수를 찾을 수 없습니다.');
+    }
+    
   } catch (error) {
     console.error('번역 오류:', error);
-    console.error('에러 상세:', {
-      message: error.message,
-      stack: error.stack,
-      text: text,
-      currentPopup: !!currentPopup
-    });
     
-    const resultDiv = currentPopup?.querySelector('.vopet-result');
-    const loadingDiv = currentPopup?.querySelector('.vopet-loading');
+    // 로딩 팝업 제거
+    if (currentPopup && currentPopup.id === 'vopet-loading-popup') {
+      currentPopup.remove();
+      currentPopup = null;
+    }
     
-    if (resultDiv && loadingDiv) {
-      loadingDiv.style.display = 'none';
-      resultDiv.style.display = 'block';
-      // 에러 메시지를 사용자 친화적으로 표시
-      let errorMessage = error.message || '알 수 없는 오류';
-      if (error.message && error.message.includes('Background Script')) {
-        errorMessage = error.message.replace(/\n/g, '<br>');
-      }
+    // 에러 팝업 표시
+    if (typeof window.showTranslationPopup === 'function') {
+      const popup = window.showTranslationPopup(
+        text,
+        null,
+        'auto',
+        'ko',
+        null,
+        'vopet-translation-popup',
+        position || 'center'
+      );
       
-      resultDiv.innerHTML = `
-        <div class="vopet-error">해석을 불러올 수 없습니다</div>
-        <div style="font-size: 11px; color: #999; margin-top: 5px; white-space: pre-line;">${escapeHtml(errorMessage)}</div>
-      `;
+      // 에러 메시지로 내용 교체
+      const contentDiv = popup.querySelector('div[style*="padding: 20px"]');
+      if (contentDiv) {
+        const errorMessage = error.message || '알 수 없는 오류';
+        contentDiv.innerHTML = `
+          <div style="color: #d32f2f; font-size: 14px; margin-bottom: 8px;">해석을 불러올 수 없습니다</div>
+          <div style="font-size: 11px; color: #999; white-space: pre-line;">${escapeHtml(errorMessage)}</div>
+        `;
+      }
+      currentPopup = popup;
     }
   }
 }

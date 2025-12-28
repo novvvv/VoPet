@@ -730,129 +730,25 @@ function saveScreenshotTranslationToChat(original, translated, targetLanguage, s
 }
 
 function showScreenshotPopup(originalText, translatedText, sourceLang, targetLanguage, furigana = null) {
-  console.log('🟣 [POPUP] showTranslationPopup 호출됨');
+  console.log('🟣 [POPUP] showScreenshotPopup 호출됨');
   console.log('🟣 [POPUP] 원문:', originalText);
   console.log('🟣 [POPUP] 번역:', translatedText);
   console.log('🟣 [POPUP] 후리가나:', furigana);
   
-  // 기존 스크린샷 팝업 제거
-  document.getElementById('vopet-screenshot-translation-popup')?.remove();
-  // content.js의 일반 번역 팝업도 제거 (충돌 방지)
-  document.getElementById('vopet-translation-popup')?.remove();
-  
-  const popup = document.createElement('div');
-  popup.id = 'vopet-screenshot-translation-popup';
-  popup.style.cssText = `
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    background: #fff;
-    border: 2px solid #000;
-    z-index: 2147483647;
-    max-width: 420px;
-    width: 90%;
-    max-height: 80vh;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  `;
-  
-  const hasTranslation = translatedText !== null;
-  
-  popup.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #000; background: #000; color: #fff;">
-      <span style="font-size: 13px; font-weight: 600;">📷 스크린샷 번역</span>
-      <button id="vopet-screenshot-close-popup" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #fff;">×</button>
-    </div>
-    <div style="padding: 20px; max-height: 60vh; overflow-y: auto;">
-      ${hasTranslation ? `
-        <div style="margin-bottom: 20px;">
-          <div style="font-size: 11px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">원문</div>
-          <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-left: 3px solid #000;">${escapeHtml(originalText)}</div>
-        </div>
-        <div style="padding-top: 20px; border-top: 1px solid #e0e0e0;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">번역</div>
-            <button id="vopet-screenshot-save-btn" data-word="${escapeHtml(originalText)}" data-translation="${escapeHtml(translatedText)}" data-furigana="${escapeHtml(furigana ? furigana.replace(/^\[|\]$/g, '') : '')}" style="
-              background: #fff;
-              color: #000;
-              border: 1px solid #000;
-              padding: 6px 12px;
-              font-size: 11px;
-              border-radius: 0;
-              cursor: pointer;
-              font-weight: 500;
-              transition: background 0.2s;
-            ">💾 CSV 저장</button>
-          </div>
-          <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-left: 3px solid #000;">${escapeHtml(translatedText)}</div>
-          ${furigana ? `<small style="display: block; margin-top: 8px; color: #666; font-size: 12px; font-style: italic;">${escapeHtml(furigana)}</small>` : ''}
-        </div>
-      ` : `
-        <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap;">${escapeHtml(originalText)}</div>
-      `}
-    </div>
-  `;
-  
-  document.body.appendChild(popup);
-  console.log('🟣 [POPUP] 팝업 DOM에 추가됨');
-  
-  popup.querySelector('#vopet-screenshot-close-popup').addEventListener('click', () => {
-    console.log('🟣 [POPUP] 닫기 버튼 클릭');
-    popup.remove();
-  });
-  
-  // CSV 저장 버튼 이벤트 (번역이 있을 때만)
-  if (hasTranslation) {
-    const saveButton = popup.querySelector('#vopet-screenshot-save-btn');
-    if (saveButton) {
-      saveButton.addEventListener('mouseenter', function() {
-        this.style.background = '#000';
-        this.style.color = '#fff';
-      });
-      saveButton.addEventListener('mouseleave', function() {
-        this.style.background = '#fff';
-        this.style.color = '#000';
-      });
-      
-      saveButton.addEventListener('click', function(e) {
-        e.stopPropagation();
-        e.preventDefault();
-        
-        const word = this.getAttribute('data-word');
-        const translation = this.getAttribute('data-translation');
-        const furigana = this.getAttribute('data-furigana') || '';
-        
-        console.log('스크린샷 CSV 저장 버튼 클릭:', { word, translation, furigana });
-        
-        // 버튼 비활성화 (중복 클릭 방지)
-        saveButton.disabled = true;
-        saveButton.textContent = '저장 중...';
-        saveButton.style.background = '#6c757d';
-        
-        // 타임아웃 설정 (10초 후 자동 복구)
-        const timeoutId = setTimeout(() => {
-          console.warn('저장 타임아웃 - 버튼 복구');
-          saveButton.disabled = false;
-          saveButton.textContent = '💾 CSV 저장';
-          saveButton.style.background = '#fff';
-          saveButton.style.color = '#000';
-          alert('저장이 시간 초과되었습니다. 다시 시도해주세요.');
-        }, 10000);
-        
-        // CSV 저장 요청
-        saveToCSV(word, translation, furigana, saveButton, timeoutId);
-      });
-    }
+  // 공통 팝업 함수 사용
+  if (typeof window.showTranslationPopup === 'function') {
+    window.showTranslationPopup(
+      originalText,
+      translatedText,
+      sourceLang,
+      targetLanguage,
+      furigana,
+      'vopet-screenshot-translation-popup',
+      'center'
+    );
+  } else {
+    console.error('showTranslationPopup 함수를 찾을 수 없습니다. translationPopup.js가 로드되었는지 확인하세요.');
   }
-  
-  document.addEventListener('keydown', function esc(e) {
-    if (e.key === 'Escape') {
-      popup.remove();
-      document.removeEventListener('keydown', esc);
-    }
-  });
 }
 
 // 전역 함수

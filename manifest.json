@@ -16,8 +16,20 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["resource/lottie.min.js", "lib/kuromoji.js", "papagoIntegration.js", "homeScreen.js", "lottieIcon.js", "detailWindow.js", "screenshotTranslation.js", "japaneseMorphology.js", "translationSidebar.js", "content.js"],
-      "css": ["content.css"]
+      "js": [
+        "resource/lottie.min.js",
+        "lib/kuromoji.js",
+        "src/translation/papagoIntegration.js",
+        "src/ui/homeScreen.js",
+        "src/ui/lottieIcon.js",
+        "src/ui/detailWindow.js",
+        "src/translation/translationPopup.js",
+        "src/translation/screenshotTranslation.js",
+        "src/japanese/japaneseMorphology.js",
+        "src/ui/translationSidebar.js",
+        "src/core/content.js"
+      ],
+      "css": ["src/core/content.css"]
     }
   ],
   "action": {
@@ -45,7 +57,8 @@
         "resource/*.png",
         "lottie/*.json",
         "lib/*.js",
-        "dict/*"
+        "dict/*",
+        "src/**/*.js"
       ],
       "matches": ["<all_urls>"]
     }

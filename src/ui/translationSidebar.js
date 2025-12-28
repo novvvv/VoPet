@@ -743,7 +743,54 @@ function loadSidebarTranslations(container) {
         position: relative;
       `;
       
-      // 버튼 컨테이너 (우측 하단)
+      // 삭제 버튼 (우측 상단)
+      const deleteItemButton = document.createElement('button');
+      deleteItemButton.innerHTML = '×';
+      deleteItemButton.style.cssText = `
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 20px;
+        height: 20px;
+        border: none;
+        background: transparent;
+        color: #999;
+        font-size: 16px;
+        cursor: pointer;
+        line-height: 1;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+      `;
+      
+      deleteItemButton.addEventListener('mouseenter', function() {
+        this.style.background = '#ffebee';
+        this.style.color = '#f44336';
+      });
+      
+      deleteItemButton.addEventListener('mouseleave', function() {
+        this.style.background = 'transparent';
+        this.style.color = '#999';
+      });
+      
+      deleteItemButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        chrome.storage.local.get(['translations'], function(result) {
+          const translations = result.translations || [];
+          const originalIndex = translations.length - 1 - index;
+          translations.splice(originalIndex, 1);
+          
+          chrome.storage.local.set({ translations: translations }, function() {
+            container.innerHTML = '';
+            loadSidebarTranslations(container);
+          });
+        });
+      });
+      
+      // 버튼 컨테이너 (우측 하단 - 저장, 파파고)
       const buttonContainer = document.createElement('div');
       buttonContainer.style.cssText = `
         position: absolute;
@@ -845,53 +892,8 @@ function loadSidebarTranslations(container) {
         }
       });
       
-      // 삭제 버튼
-      const deleteItemButton = document.createElement('button');
-      deleteItemButton.innerHTML = '×';
-      deleteItemButton.style.cssText = `
-        width: 20px;
-        height: 20px;
-        border: none;
-        background: transparent;
-        color: #999;
-        font-size: 16px;
-        cursor: pointer;
-        line-height: 1;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 4px;
-        transition: all 0.2s ease;
-      `;
-      
-      deleteItemButton.addEventListener('mouseenter', function() {
-        this.style.background = '#ffebee';
-        this.style.color = '#f44336';
-      });
-      
-      deleteItemButton.addEventListener('mouseleave', function() {
-        this.style.background = 'transparent';
-        this.style.color = '#999';
-      });
-      
-      deleteItemButton.addEventListener('click', function(e) {
-        e.stopPropagation();
-        chrome.storage.local.get(['translations'], function(result) {
-          const translations = result.translations || [];
-          const originalIndex = translations.length - 1 - index;
-          translations.splice(originalIndex, 1);
-          
-          chrome.storage.local.set({ translations: translations }, function() {
-            container.innerHTML = '';
-            loadSidebarTranslations(container);
-          });
-        });
-      });
-      
       buttonContainer.appendChild(saveButton);
       buttonContainer.appendChild(papagoButton);
-      buttonContainer.appendChild(deleteItemButton);
       
       // 원본 텍스트
       const originalText = document.createElement('div');
@@ -934,6 +936,7 @@ function loadSidebarTranslations(container) {
       metaInfo.appendChild(languageInfo);
       metaInfo.appendChild(timeInfo);
       
+      translationItem.appendChild(deleteItemButton);
       translationItem.appendChild(buttonContainer);
       translationItem.appendChild(originalText);
       translationItem.appendChild(translatedText);
@@ -949,4 +952,6 @@ if (typeof window !== 'undefined') {
   window.createTranslationSidebar = createTranslationSidebar;
   window.toggleSidebar = toggleSidebar;
   window.loadSidebarTranslations = loadSidebarTranslations;
+  window.showSaveConfirmPopup = showSaveConfirmPopup;
+  window.executeSave = executeSave;
 }
