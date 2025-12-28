@@ -965,7 +965,7 @@ async function translateWord(text) {
       });
       
       // 번역 기록 저장 (한 번만)
-      saveTranslationToChat(text, translation, targetLanguage, translatorService, sourceLang);
+      saveTranslationToChat(text, translation, targetLanguage, translatorService, sourceLang, furigana);
     }
   } catch (error) {
     console.error('번역 오류:', error);
@@ -1799,7 +1799,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 let lastSavedTranslation = null;
 let saveTranslationTimeout = null;
 
-function saveTranslationToChat(original, translated, targetLanguage, translatorService, sourceLanguage) {
+function saveTranslationToChat(original, translated, targetLanguage, translatorService, sourceLanguage, furigana = '') {
   try {
     // 중복 저장 방지: 같은 번역이 연속으로 들어오는 경우 무시
     const translationKey = `${original}_${translated}_${Date.now()}`;
@@ -1822,6 +1822,9 @@ function saveTranslationToChat(original, translated, targetLanguage, translatorS
       const now = new Date();
       const timestamp = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       
+      // furigana에서 대괄호 제거
+      const cleanFurigana = furigana ? furigana.replace(/^\[|\]$/g, '') : '';
+      
       // 번역 기록 객체 생성
       const translationRecord = {
         original: original,
@@ -1829,6 +1832,7 @@ function saveTranslationToChat(original, translated, targetLanguage, translatorS
         sourceLanguage: sourceLanguage || detectLanguage(original),
         targetLanguage: targetLanguage || 'ko',
         translatorService: translatorService || 'google-free',
+        furigana: cleanFurigana,
         timestamp: timestamp
       };
       

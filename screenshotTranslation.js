@@ -240,7 +240,8 @@ async function cropAndTranslate(left, top, width, height) {
     
     // 번역 기록 저장 (번역이 있을 때만)
     if (translatedText) {
-      saveScreenshotTranslationToChat(extractedText, translatedText, targetLanguage, sourceLang);
+      const cleanFurigana = furigana ? furigana.replace(/^\[|\]$/g, '') : '';
+      saveScreenshotTranslationToChat(extractedText, translatedText, targetLanguage, sourceLang, cleanFurigana);
     }
     
     loadingPopup.remove();
@@ -665,7 +666,7 @@ function saveToCSV(word, translation, furigana, saveButton, timeoutId) {
 /**
  * 스크린샷 번역 기록 저장
  */
-function saveScreenshotTranslationToChat(original, translated, targetLanguage, sourceLanguage) {
+function saveScreenshotTranslationToChat(original, translated, targetLanguage, sourceLanguage, furigana = '') {
   try {
     // 현재 시간 생성
     const now = new Date();
@@ -678,6 +679,7 @@ function saveScreenshotTranslationToChat(original, translated, targetLanguage, s
       sourceLanguage: sourceLanguage || 'en',
       targetLanguage: targetLanguage || 'ko',
       translatorService: 'screenshot',
+      furigana: furigana || '',
       timestamp: timestamp
     };
     
