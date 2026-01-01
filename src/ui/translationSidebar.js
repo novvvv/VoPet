@@ -31,7 +31,7 @@ function createTranslationSidebar() {
     }
   });
 
-  // 사이드바 컨테이너
+  // 사이드바 컨테이너 - Cursor-style Dark Theme
   const sidebar = document.createElement('div');
   sidebar.id = 'vopet-translation-sidebar';
   sidebar.style.cssText = `
@@ -40,35 +40,36 @@ function createTranslationSidebar() {
     right: 0;
     width: ${SIDEBAR_WIDTH}px;
     height: 100vh;
-    background: #fff;
-    border-left: 2px solid #000;
+    background: #1e1e1e;
+    border-left: 1px solid #3c3c3c;
     z-index: 2147483646;
     display: flex;
     flex-direction: column;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.15);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.4);
     transition: transform 0.3s ease, opacity 0.2s ease;
     opacity: ${sidebarOpacity};
   `;
 
-  // 헤더 영역
+  // 헤더 영역 - Cursor-style
   const header = document.createElement('div');
   header.style.cssText = `
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
-    border-bottom: 2px solid #000;
-    background: #000;
-    color: #fff;
+    padding: 14px 16px;
+    border-bottom: 1px solid #3c3c3c;
+    background: #252526;
+    color: #e0e0e0;
     flex-shrink: 0;
   `;
 
   const title = document.createElement('div');
-  title.textContent = '번역 기록';
+  title.textContent = '🐾 번역 기록';
   title.style.cssText = `
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
+    color: #e0e0e0;
   `;
 
   const headerButtons = document.createElement('div');
@@ -78,24 +79,29 @@ function createTranslationSidebar() {
     align-items: center;
   `;
 
-  // 전체 삭제 버튼
+  // 전체 삭제 버튼 - Cursor-style
   const deleteAllButton = document.createElement('button');
   deleteAllButton.textContent = '전체 삭제';
   deleteAllButton.style.cssText = `
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: #fff;
+    background: #2d2d2d;
+    border: 1px solid #3c3c3c;
+    color: #a0a0a0;
     font-size: 11px;
     cursor: pointer;
     padding: 5px 10px;
     border-radius: 4px;
-    transition: background 0.2s;
+    transition: all 0.15s;
+    font-family: inherit;
   `;
   deleteAllButton.addEventListener('mouseenter', function() {
-    this.style.background = 'rgba(255, 255, 255, 0.2)';
+    this.style.background = '#f14c4c';
+    this.style.borderColor = '#f14c4c';
+    this.style.color = '#fff';
   });
   deleteAllButton.addEventListener('mouseleave', function() {
-    this.style.background = 'rgba(255, 255, 255, 0.1)';
+    this.style.background = '#2d2d2d';
+    this.style.borderColor = '#3c3c3c';
+    this.style.color = '#a0a0a0';
   });
 
   deleteAllButton.addEventListener('click', function() {
@@ -114,24 +120,26 @@ function createTranslationSidebar() {
   header.appendChild(title);
   header.appendChild(headerButtons);
 
-  // 투명도 조절 영역
+  // 투명도 조절 영역 - Cursor-style
   const opacityControl = document.createElement('div');
   opacityControl.style.cssText = `
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 10px 16px;
-    background: #f5f5f5;
-    border-bottom: 1px solid #e0e0e0;
+    background: #252526;
+    border-bottom: 1px solid #3c3c3c;
     flex-shrink: 0;
   `;
 
   const opacityLabel = document.createElement('span');
   opacityLabel.textContent = '투명도';
   opacityLabel.style.cssText = `
-    font-size: 12px;
-    color: #666;
+    font-size: 11px;
+    color: #6e6e6e;
     white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   `;
 
   const opacitySlider = document.createElement('input');
@@ -144,14 +152,14 @@ function createTranslationSidebar() {
     flex: 1;
     height: 4px;
     cursor: pointer;
-    accent-color: #000;
+    accent-color: #0078d4;
   `;
 
   const opacityValue = document.createElement('span');
   opacityValue.textContent = `${Math.round(sidebarOpacity * 100)}%`;
   opacityValue.style.cssText = `
     font-size: 11px;
-    color: #999;
+    color: #6e6e6e;
     min-width: 35px;
     text-align: right;
   `;
@@ -168,7 +176,7 @@ function createTranslationSidebar() {
   opacityControl.appendChild(opacitySlider);
   opacityControl.appendChild(opacityValue);
 
-  // 번역 기록 리스트 컨테이너
+  // 번역 기록 리스트 컨테이너 - Cursor-style
   const listContainer = document.createElement('div');
   listContainer.id = 'vopet-sidebar-translations-list';
   listContainer.style.cssText = `
@@ -177,7 +185,8 @@ function createTranslationSidebar() {
     padding: 12px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
+    background: #1e1e1e;
   `;
 
   sidebar.appendChild(header);
@@ -223,38 +232,41 @@ function createToggleTab() {
     top: 50%;
     right: ${isSidebarExpanded ? SIDEBAR_WIDTH : 0}px;
     transform: translateY(-50%);
-    width: 24px;
-    height: 60px;
-    background: #000;
-    border: 2px solid #000;
-    border-right: ${isSidebarExpanded ? 'none' : '2px solid #000'};
+    width: 20px;
+    height: 48px;
+    background: #252526;
+    border: 1px solid #3c3c3c;
+    border-right: ${isSidebarExpanded ? 'none' : '1px solid #3c3c3c'};
     border-radius: 6px 0 0 6px;
     cursor: pointer;
     z-index: 2147483647;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: right 0.3s ease, background 0.2s ease;
-    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+    transition: right 0.3s ease, background 0.15s ease;
+    box-shadow: -2px 0 12px rgba(0, 0, 0, 0.3);
   `;
 
   const arrow = document.createElement('span');
   arrow.id = 'vopet-toggle-arrow';
-  arrow.textContent = isSidebarExpanded ? '▶' : '◀'; // 닫힌 상태면 ◀ 표시
+  arrow.textContent = isSidebarExpanded ? '›' : '‹';
   arrow.style.cssText = `
-    color: #fff;
-    font-size: 12px;
+    color: #a0a0a0;
+    font-size: 14px;
     user-select: none;
+    line-height: 1;
   `;
 
   toggleTab.appendChild(arrow);
 
   toggleTab.addEventListener('mouseenter', function() {
-    this.style.background = '#333';
+    this.style.background = '#3c3c3c';
+    arrow.style.color = '#e0e0e0';
   });
 
   toggleTab.addEventListener('mouseleave', function() {
-    this.style.background = '#000';
+    this.style.background = '#252526';
+    arrow.style.color = '#a0a0a0';
   });
 
   toggleTab.addEventListener('click', function() {
@@ -282,15 +294,15 @@ function toggleSidebar() {
       toggleTab.style.right = `${SIDEBAR_WIDTH}px`;
       toggleTab.style.borderRight = 'none';
     }
-    if (arrow) arrow.textContent = '▶';
+    if (arrow) arrow.textContent = '›';
   } else {
     // 사이드바 닫기
     translationSidebar.style.transform = `translateX(${SIDEBAR_WIDTH}px)`;
     if (toggleTab) {
       toggleTab.style.right = '0px';
-      toggleTab.style.borderRight = '2px solid #000';
+      toggleTab.style.borderRight = '1px solid #3c3c3c';
     }
-    if (arrow) arrow.textContent = '◀';
+    if (arrow) arrow.textContent = '‹';
   }
 }
 
@@ -302,9 +314,9 @@ function showEmptyMessage(container) {
   emptyMessage.textContent = '번역 기록이 없습니다.';
   emptyMessage.style.cssText = `
     text-align: center;
-    color: #999;
+    color: #6e6e6e;
     padding: 40px 20px;
-    font-size: 14px;
+    font-size: 13px;
   `;
   container.appendChild(emptyMessage);
 }
@@ -319,7 +331,7 @@ function showSaveConfirmPopup(initialWord, initialTranslation, initialFurigana, 
     existingPopup.remove();
   }
   
-  // 팝업 생성
+  // 팝업 생성 - Cursor-style Dark Theme
   const popup = document.createElement('div');
   popup.id = 'vopet-save-confirm-popup';
   popup.style.cssText = `
@@ -327,15 +339,17 @@ function showSaveConfirmPopup(initialWord, initialTranslation, initialFurigana, 
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    background: #fff;
-    border: 2px solid #000;
+    background: #1e1e1e;
+    border: 1px solid #3c3c3c;
+    border-radius: 8px;
     z-index: 2147483648;
     width: 420px;
     max-width: 90vw;
     max-height: 80vh;
     overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    color: #e0e0e0;
   `;
   
   // HTML 이스케이프 함수
@@ -346,33 +360,33 @@ function showSaveConfirmPopup(initialWord, initialTranslation, initialFurigana, 
   }
   
   popup.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 2px solid #000; background: #000; color: #fff;">
-      <span style="font-size: 15px; font-weight: 600;">CSV 저장 확인</span>
-      <button id="vopet-save-confirm-close" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #fff; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">×</button>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid #3c3c3c; background: #252526;">
+      <span style="font-size: 14px; font-weight: 600; color: #e0e0e0;">💾 CSV 저장 확인</span>
+      <button id="vopet-save-confirm-close" style="background: transparent; border: none; font-size: 16px; cursor: pointer; color: #a0a0a0; padding: 4px 8px; border-radius: 4px; transition: all 0.15s;">✕</button>
     </div>
-    <div style="padding: 20px; max-height: calc(80vh - 120px); overflow-y: auto;">
-      <div style="margin-bottom: 20px; font-size: 12px; color: #666; line-height: 1.6;">
+    <div style="padding: 20px; max-height: calc(80vh - 120px); overflow-y: auto; background: #1e1e1e;">
+      <div style="margin-bottom: 16px; font-size: 12px; color: #6e6e6e; line-height: 1.6;">
         CSV 파일에 저장될 내용을 확인하고 수정할 수 있습니다.
       </div>
       
       <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #333;">단어 (원문)</label>
-        <input type="text" id="vopet-save-word" value="${escapeHtml(initialWord)}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; box-sizing: border-box;">
+        <label style="display: block; margin-bottom: 6px; font-size: 10px; font-weight: 600; color: #6e6e6e; text-transform: uppercase; letter-spacing: 0.5px;">단어 (원문)</label>
+        <input type="text" id="vopet-save-word" value="${escapeHtml(initialWord)}" style="width: 100%; padding: 10px 12px; border: 1px solid #3c3c3c; border-radius: 6px; font-size: 13px; box-sizing: border-box; background: #2d2d2d; color: #e0e0e0; outline: none; transition: border-color 0.15s;">
       </div>
       
       <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #333;">발음</label>
-        <input type="text" id="vopet-save-furigana" value="${escapeHtml(initialFurigana)}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; box-sizing: border-box;">
+        <label style="display: block; margin-bottom: 6px; font-size: 10px; font-weight: 600; color: #6e6e6e; text-transform: uppercase; letter-spacing: 0.5px;">발음</label>
+        <input type="text" id="vopet-save-furigana" value="${escapeHtml(initialFurigana)}" style="width: 100%; padding: 10px 12px; border: 1px solid #3c3c3c; border-radius: 6px; font-size: 13px; box-sizing: border-box; background: #2d2d2d; color: #e0e0e0; outline: none; transition: border-color 0.15s;">
       </div>
       
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #333;">뜻 (번역)</label>
-        <textarea id="vopet-save-translation" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; min-height: 60px; resize: vertical; box-sizing: border-box; font-family: inherit;">${escapeHtml(initialTranslation)}</textarea>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 6px; font-size: 10px; font-weight: 600; color: #6e6e6e; text-transform: uppercase; letter-spacing: 0.5px;">뜻 (번역)</label>
+        <textarea id="vopet-save-translation" style="width: 100%; padding: 10px 12px; border: 1px solid #3c3c3c; border-radius: 6px; font-size: 13px; min-height: 60px; resize: vertical; box-sizing: border-box; font-family: inherit; background: #2d2d2d; color: #e0e0e0; outline: none; transition: border-color 0.15s;">${escapeHtml(initialTranslation)}</textarea>
       </div>
     </div>
-    <div style="display: flex; gap: 10px; padding: 16px 20px; border-top: 1px solid #e0e0e0; background: #f8f9fa;">
-      <button id="vopet-save-confirm-cancel" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background: white; color: #666; font-size: 14px; cursor: pointer; transition: all 0.2s ease;">취소</button>
-      <button id="vopet-save-confirm-save" style="flex: 1; padding: 10px; border: none; border-radius: 4px; background: #000; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">저장</button>
+    <div style="display: flex; gap: 10px; padding: 16px; border-top: 1px solid #3c3c3c; background: #252526;">
+      <button id="vopet-save-confirm-cancel" style="flex: 1; padding: 10px; border: 1px solid #3c3c3c; border-radius: 6px; background: #2d2d2d; color: #a0a0a0; font-size: 13px; cursor: pointer; transition: all 0.15s; font-family: inherit;">취소</button>
+      <button id="vopet-save-confirm-save" style="flex: 1; padding: 10px; border: none; border-radius: 6px; background: #0078d4; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; font-family: inherit;">저장</button>
     </div>
   `;
   
@@ -436,17 +450,17 @@ function executeSave(word, translation, furigana, saveButton) {
   // 버튼 비활성화 (중복 클릭 방지)
   saveButton.disabled = true;
   saveButton.textContent = '저장 중...';
-  saveButton.style.background = '#6c757d';
-  saveButton.style.color = '#fff';
-  saveButton.style.borderColor = '#6c757d';
+  saveButton.style.background = '#3c3c3c';
+  saveButton.style.color = '#a0a0a0';
+  saveButton.style.borderColor = '#3c3c3c';
   
   // 타임아웃 설정 (10초 후 자동 복구)
   const timeoutId = setTimeout(() => {
     saveButton.disabled = false;
     saveButton.textContent = '💾 저장';
-    saveButton.style.background = '#fff';
-    saveButton.style.color = '#666';
-    saveButton.style.borderColor = '#ddd';
+    saveButton.style.background = '#2d2d2d';
+    saveButton.style.color = '#e0e0e0';
+    saveButton.style.borderColor = '#3c3c3c';
     alert('저장이 시간 초과되었습니다. 다시 시도해주세요.');
   }, 10000);
   
@@ -466,9 +480,9 @@ function executeSave(word, translation, furigana, saveButton) {
       clearTimeout(timeoutId);
       saveButton.disabled = false;
       saveButton.textContent = '💾 저장';
-      saveButton.style.background = '#fff';
-      saveButton.style.color = '#666';
-      saveButton.style.borderColor = '#ddd';
+      saveButton.style.background = '#2d2d2d';
+      saveButton.style.color = '#e0e0e0';
+      saveButton.style.borderColor = '#3c3c3c';
       alert('연동된 파일이 없습니다. 설정에서 파일을 선택해주세요.');
       return;
     }
@@ -477,9 +491,9 @@ function executeSave(word, translation, furigana, saveButton) {
       clearTimeout(timeoutId);
       saveButton.disabled = false;
       saveButton.textContent = '💾 저장';
-      saveButton.style.background = '#fff';
-      saveButton.style.color = '#666';
-      saveButton.style.borderColor = '#ddd';
+      saveButton.style.background = '#2d2d2d';
+      saveButton.style.color = '#e0e0e0';
+      saveButton.style.borderColor = '#3c3c3c';
       alert('Numbers 파일은 CSV로 내보낸 후 사용해주세요.');
       return;
     }
@@ -488,9 +502,9 @@ function executeSave(word, translation, furigana, saveButton) {
       clearTimeout(timeoutId);
       saveButton.disabled = false;
       saveButton.textContent = '💾 저장';
-      saveButton.style.background = '#fff';
-      saveButton.style.color = '#666';
-      saveButton.style.borderColor = '#ddd';
+      saveButton.style.background = '#2d2d2d';
+      saveButton.style.color = '#e0e0e0';
+      saveButton.style.borderColor = '#3c3c3c';
       alert('파일 내용을 읽을 수 없습니다. 파일을 다시 선택해주세요.');
       return;
     }
@@ -613,9 +627,9 @@ function executeSave(word, translation, furigana, saveButton) {
           clearTimeout(timeoutId);
           saveButton.disabled = false;
           saveButton.textContent = '💾 저장';
-          saveButton.style.background = '#fff';
-          saveButton.style.color = '#666';
-          saveButton.style.borderColor = '#ddd';
+          saveButton.style.background = '#2d2d2d';
+          saveButton.style.color = '#e0e0e0';
+          saveButton.style.borderColor = '#3c3c3c';
           alert('파일 저장 중 오류가 발생했습니다: object store를 찾을 수 없습니다.');
           return;
         }
@@ -637,25 +651,25 @@ function executeSave(word, translation, furigana, saveButton) {
               
               clearTimeout(timeoutId);
               saveButton.textContent = '✓ 저장됨';
-              saveButton.style.background = '#000';
-              saveButton.style.color = '#fff';
-              saveButton.style.borderColor = '#000';
+              saveButton.style.background = '#4ec9b0';
+              saveButton.style.color = '#000';
+              saveButton.style.borderColor = '#4ec9b0';
               saveButton.disabled = false;
               
               setTimeout(() => {
                 saveButton.textContent = '💾 저장';
-                saveButton.style.background = '#fff';
-                saveButton.style.color = '#666';
-                saveButton.style.borderColor = '#ddd';
+                saveButton.style.background = '#2d2d2d';
+                saveButton.style.color = '#e0e0e0';
+                saveButton.style.borderColor = '#3c3c3c';
               }, 2000);
             } catch (error) {
               console.error('파일 쓰기 오류:', error);
               clearTimeout(timeoutId);
               saveButton.disabled = false;
               saveButton.textContent = '💾 저장';
-              saveButton.style.background = '#fff';
-              saveButton.style.color = '#666';
-              saveButton.style.borderColor = '#ddd';
+              saveButton.style.background = '#2d2d2d';
+              saveButton.style.color = '#e0e0e0';
+              saveButton.style.borderColor = '#3c3c3c';
               alert('파일 저장 중 오류가 발생했습니다: ' + error.message);
             }
           } else {
@@ -671,29 +685,29 @@ function executeSave(word, translation, furigana, saveButton) {
               
               if (chrome.runtime.lastError) {
                 saveButton.textContent = '💾 저장';
-                saveButton.style.background = '#fff';
-                saveButton.style.color = '#666';
-                saveButton.style.borderColor = '#ddd';
+                saveButton.style.background = '#2d2d2d';
+                saveButton.style.color = '#e0e0e0';
+                saveButton.style.borderColor = '#3c3c3c';
                 alert('CSV 저장 중 오류가 발생했습니다: ' + chrome.runtime.lastError.message);
                 return;
               }
               
               if (response && response.success) {
                 saveButton.textContent = '✓ 저장됨';
-                saveButton.style.background = '#000';
-                saveButton.style.color = '#fff';
-                saveButton.style.borderColor = '#000';
+                saveButton.style.background = '#4ec9b0';
+                saveButton.style.color = '#000';
+                saveButton.style.borderColor = '#4ec9b0';
                 setTimeout(() => {
                   saveButton.textContent = '💾 저장';
-                  saveButton.style.background = '#fff';
-                  saveButton.style.color = '#666';
-                  saveButton.style.borderColor = '#ddd';
+                  saveButton.style.background = '#2d2d2d';
+                  saveButton.style.color = '#e0e0e0';
+                  saveButton.style.borderColor = '#3c3c3c';
                 }, 2000);
               } else {
                 saveButton.textContent = '💾 저장';
-                saveButton.style.background = '#fff';
-                saveButton.style.color = '#666';
-                saveButton.style.borderColor = '#ddd';
+                saveButton.style.background = '#2d2d2d';
+                saveButton.style.color = '#e0e0e0';
+                saveButton.style.borderColor = '#3c3c3c';
                 alert('CSV 저장에 실패했습니다: ' + (response?.error || '알 수 없는 오류'));
               }
             });
@@ -705,9 +719,9 @@ function executeSave(word, translation, furigana, saveButton) {
           clearTimeout(timeoutId);
           saveButton.disabled = false;
           saveButton.textContent = '💾 저장';
-          saveButton.style.background = '#fff';
-          saveButton.style.color = '#666';
-          saveButton.style.borderColor = '#ddd';
+          saveButton.style.background = '#2d2d2d';
+          saveButton.style.color = '#e0e0e0';
+          saveButton.style.borderColor = '#3c3c3c';
           alert('파일 저장 중 오류가 발생했습니다: ' + getRequest.error.message);
         };
       };
@@ -733,19 +747,28 @@ function loadSidebarTranslations(container) {
     sortedTranslations.forEach((item, index) => {
       const translationItem = document.createElement('div');
       translationItem.style.cssText = `
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
+        background: #252526;
+        border: 1px solid #3c3c3c;
+        border-radius: 6px;
         padding: 10px 12px;
         display: flex;
         flex-direction: column;
         gap: 6px;
         position: relative;
+        transition: border-color 0.15s;
       `;
       
-      // 삭제 버튼 (우측 상단)
+      translationItem.addEventListener('mouseenter', function() {
+        this.style.borderColor = '#454545';
+      });
+      
+      translationItem.addEventListener('mouseleave', function() {
+        this.style.borderColor = '#3c3c3c';
+      });
+      
+      // 삭제 버튼 (우측 상단) - Cursor-style
       const deleteItemButton = document.createElement('button');
-      deleteItemButton.innerHTML = '×';
+      deleteItemButton.innerHTML = '✕';
       deleteItemButton.style.cssText = `
         position: absolute;
         top: 8px;
@@ -754,8 +777,8 @@ function loadSidebarTranslations(container) {
         height: 20px;
         border: none;
         background: transparent;
-        color: #999;
-        font-size: 16px;
+        color: #6e6e6e;
+        font-size: 12px;
         cursor: pointer;
         line-height: 1;
         padding: 0;
@@ -763,17 +786,17 @@ function loadSidebarTranslations(container) {
         align-items: center;
         justify-content: center;
         border-radius: 4px;
-        transition: all 0.2s ease;
+        transition: all 0.15s;
       `;
       
       deleteItemButton.addEventListener('mouseenter', function() {
-        this.style.background = '#ffebee';
-        this.style.color = '#f44336';
+        this.style.background = 'rgba(241, 76, 76, 0.15)';
+        this.style.color = '#f14c4c';
       });
       
       deleteItemButton.addEventListener('mouseleave', function() {
         this.style.background = 'transparent';
-        this.style.color = '#999';
+        this.style.color = '#6e6e6e';
       });
       
       deleteItemButton.addEventListener('click', function(e) {
@@ -801,31 +824,32 @@ function loadSidebarTranslations(container) {
         align-items: center;
       `;
       
-      // 저장 버튼
+      // 저장 버튼 - Cursor-style
       const saveButton = document.createElement('button');
       saveButton.textContent = '💾 저장';
       saveButton.style.cssText = `
-        padding: 3px 6px;
-        border: 1px solid #ddd;
+        padding: 3px 8px;
+        border: 1px solid #3c3c3c;
         border-radius: 4px;
-        background: white;
-        color: #666;
+        background: #2d2d2d;
+        color: #a0a0a0;
         font-size: 10px;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.15s;
+        font-family: inherit;
       `;
       
       saveButton.addEventListener('mouseenter', function() {
-        this.style.background = '#000';
-        this.style.color = '#fff';
-        this.style.borderColor = '#000';
+        this.style.background = '#4ec9b0';
+        this.style.color = '#000';
+        this.style.borderColor = '#4ec9b0';
       });
       
       saveButton.addEventListener('mouseleave', function() {
         if (!this.disabled) {
-          this.style.background = 'white';
-          this.style.color = '#666';
-          this.style.borderColor = '#ddd';
+          this.style.background = '#2d2d2d';
+          this.style.color = '#a0a0a0';
+          this.style.borderColor = '#3c3c3c';
         }
       });
       
@@ -841,30 +865,31 @@ function loadSidebarTranslations(container) {
         showSaveConfirmPopup(word, translation, furigana, saveButton);
       });
       
-      // 파파고 버튼
+      // 파파고 버튼 - Cursor-style
       const papagoButton = document.createElement('button');
-      papagoButton.textContent = '파파고';
+      papagoButton.textContent = '🌐 파파고';
       papagoButton.style.cssText = `
-        padding: 3px 6px;
-        border: 1px solid #ddd;
+        padding: 3px 8px;
+        border: 1px solid #3c3c3c;
         border-radius: 4px;
-        background: white;
-        color: #666;
+        background: #2d2d2d;
+        color: #a0a0a0;
         font-size: 10px;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.15s;
+        font-family: inherit;
       `;
       
       papagoButton.addEventListener('mouseenter', function() {
-        this.style.background = '#e3f2fd';
-        this.style.borderColor = '#2196f3';
-        this.style.color = '#2196f3';
+        this.style.background = '#0078d4';
+        this.style.borderColor = '#0078d4';
+        this.style.color = '#fff';
       });
       
       papagoButton.addEventListener('mouseleave', function() {
-        this.style.background = 'white';
-        this.style.borderColor = '#ddd';
-        this.style.color = '#666';
+        this.style.background = '#2d2d2d';
+        this.style.borderColor = '#3c3c3c';
+        this.style.color = '#a0a0a0';
       });
       
       papagoButton.addEventListener('click', function(e) {
@@ -895,33 +920,33 @@ function loadSidebarTranslations(container) {
       buttonContainer.appendChild(saveButton);
       buttonContainer.appendChild(papagoButton);
       
-      // 원본 텍스트
+      // 원본 텍스트 - Cursor-style
       const originalText = document.createElement('div');
       originalText.textContent = item.original || '';
       originalText.style.cssText = `
-        font-size: 13px;
-        color: #666;
+        font-size: 12px;
+        color: #a0a0a0;
         font-weight: 500;
-        padding-bottom: 30px;
+        padding-bottom: 6px;
         word-break: break-word;
       `;
       
-      // 번역 텍스트
+      // 번역 텍스트 - Cursor-style
       const translatedText = document.createElement('div');
       translatedText.textContent = item.translated || '';
       translatedText.style.cssText = `
-        font-size: 15px;
-        color: #333;
+        font-size: 14px;
+        color: #e0e0e0;
         font-weight: 600;
-        padding-bottom: 30px;
+        padding-bottom: 28px;
         word-break: break-word;
       `;
       
-      // 메타 정보 (언어, 시간)
+      // 메타 정보 (언어, 시간) - Cursor-style
       const metaInfo = document.createElement('div');
       metaInfo.style.cssText = `
         font-size: 10px;
-        color: #aaa;
+        color: #6e6e6e;
         display: flex;
         gap: 8px;
         margin-top: 2px;

@@ -1,20 +1,53 @@
-/* VoPet 팝업 스타일 */
-#vopet-translation-popup {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  border-radius: 8px;
-  background: #ffffff;
-  color: #333333;
-  min-width: 200px;
-  max-width: 300px;
-  animation: vopet-fadeIn 0.3s ease-out;
-  border: 1px solid #e9ecef;
+/* VoPet - Cursor-style Dark Theme */
+
+/* CSS Variables */
+:root {
+  --vopet-bg-primary: #1e1e1e;
+  --vopet-bg-secondary: #252526;
+  --vopet-bg-tertiary: #2d2d2d;
+  --vopet-bg-hover: #3c3c3c;
+  --vopet-bg-active: #094771;
+  
+  --vopet-text-primary: #e0e0e0;
+  --vopet-text-secondary: #a0a0a0;
+  --vopet-text-muted: #6e6e6e;
+  
+  --vopet-border-primary: #3c3c3c;
+  --vopet-border-secondary: #454545;
+  
+  --vopet-accent-primary: #0078d4;
+  --vopet-accent-hover: #1a8cff;
+  --vopet-accent-subtle: rgba(0, 120, 212, 0.15);
+  
+  --vopet-success: #4ec9b0;
+  --vopet-warning: #dcdcaa;
+  --vopet-error: #f14c4c;
+  
+  --vopet-radius-sm: 4px;
+  --vopet-radius-md: 6px;
+  --vopet-radius-lg: 8px;
+  
+  --vopet-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --vopet-font-mono: 'SF Mono', Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* 팝업 기본 스타일 */
+#vopet-translation-popup,
+#vopet-screenshot-translation-popup,
+#vopet-loading-popup {
+  font-family: var(--vopet-font) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+  border-radius: var(--vopet-radius-lg) !important;
+  background: var(--vopet-bg-primary) !important;
+  color: var(--vopet-text-primary) !important;
+  border: 1px solid var(--vopet-border-primary) !important;
+  animation: vopet-fadeIn 0.2s ease-out !important;
 }
 
 @keyframes vopet-fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px) scale(0.95);
+    transform: translateY(-8px) scale(0.98);
   }
   to {
     opacity: 1;
@@ -22,262 +55,126 @@
   }
 }
 
-.vopet-popup-content {
-  padding: 0;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.vopet-popup-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.vopet-word {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333333;
-}
-
+/* 닫기 버튼 */
 .vopet-close-btn {
-  background: none;
-  border: none;
-  color: #666666;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 0;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s;
+  background: transparent !important;
+  border: none !important;
+  color: var(--vopet-text-secondary) !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+  padding: 4px 8px !important;
+  border-radius: var(--vopet-radius-sm) !important;
+  transition: background 0.15s, color 0.15s !important;
+  line-height: 1 !important;
 }
 
 .vopet-close-btn:hover {
-  background: #e9ecef;
-  color: #333333;
+  background: var(--vopet-bg-hover) !important;
+  color: var(--vopet-text-primary) !important;
 }
 
-.vopet-popup-body {
-  padding: 16px;
-  min-height: 60px;
-}
-
-/* Footer 스타일 */
-.vopet-popup-footer {
-  padding: 12px 16px;
-  border-top: 1px solid #e9ecef;
-  background: #f8f9fa;
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
-}
-
-.vopet-save-btn {
-  width: 100%;
-  padding: 10px 16px;
-  background: #007bff;
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.vopet-save-btn:hover:not(:disabled) {
-  background: #0056b3;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
-}
-
-.vopet-save-btn:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(0, 123, 255, 0.3);
-}
-
-.vopet-save-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  transform: none;
-}
-
+/* 로딩 스피너 */
 .vopet-loading {
   text-align: center;
-  color: #666666;
-  font-size: 14px;
+  color: var(--vopet-text-secondary);
+  font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 40px;
+  gap: 10px;
+  padding: 20px;
 }
 
 .vopet-loading::after {
   content: '';
   width: 16px;
   height: 16px;
-  border: 2px solid #e9ecef;
-  border-top: 2px solid #007bff;
+  border: 2px solid var(--vopet-border-primary);
+  border-top-color: var(--vopet-accent-primary);
   border-radius: 50%;
-  animation: vopet-spin 1s linear infinite;
-  margin-left: 8px;
+  animation: vopet-spin 0.8s linear infinite;
 }
 
 @keyframes vopet-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
 
-.vopet-result {
-  text-align: center;
-}
-
-.vopet-translation {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #333333;
-  line-height: 1.6;
-}
-
-/* 전체 번역 문장 스타일 */
-.vopet-translation-full {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 12px;
-  color: #333333;
-  line-height: 1.6;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e9ecef;
-}
-
-/* 개별 단어 번역 영역 */
-.vopet-word-translations {
-  margin-top: 12px;
+/* 에러 메시지 */
+.vopet-error {
+  color: var(--vopet-error);
   font-size: 13px;
-  line-height: 1.8;
-  color: #555555;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* 개별 단어 항목 */
-.vopet-word-item {
-  display: inline-block;
-  padding: 4px 8px;
-  background: #f8f9fa;
-  border-radius: 4px;
-  border: 1px solid #e9ecef;
-  transition: all 0.2s ease;
-  margin: 2px;
-  vertical-align: top;
-}
-
-.vopet-word-item:hover {
-  background: #e9ecef;
-  border-color: #dee2e6;
-}
-
-.vopet-word-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.vopet-word-original {
-  font-weight: 600;
-  color: #495057;
-  margin-right: 6px;
-  display: inline-block;
-}
-
-.vopet-word-separator {
-  color: #adb5bd;
-  margin: 0 4px;
-  font-size: 12px;
-}
-
-.vopet-word-translated {
-  color: #1976d2;
-  font-weight: 500;
-  display: inline-block;
-}
-
-/* 인라인 후리가나 (단어별 번역에서 사용) */
-.furigana-inline {
-  display: block;
-  color: #666666;
-  font-size: 10px;
-  font-style: italic;
-  margin-top: 2px;
-  padding: 1px 4px;
-  background: #f0f0f0;
-  border-radius: 3px;
   text-align: center;
+  padding: 12px;
+  background: rgba(241, 76, 76, 0.1);
+  border-radius: var(--vopet-radius-md);
+  border: 1px solid rgba(241, 76, 76, 0.2);
 }
 
-/* 단어 세그먼트 스타일 (파파고 스타일) */
-.vopet-word-segment {
-  display: inline-block;
-  cursor: pointer;
-  padding: 2px 4px;
-  margin: 0 1px;
-  border-radius: 3px;
-  transition: all 0.2s ease;
-  position: relative;
+/* 파파고 링크 */
+.vopet-papago-link {
+  background: var(--vopet-bg-tertiary) !important;
+  color: var(--vopet-text-primary) !important;
+  border: 1px solid var(--vopet-border-primary) !important;
+  padding: 6px 12px !important;
+  font-size: 11px !important;
+  border-radius: var(--vopet-radius-sm) !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  transition: all 0.15s !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
 }
 
-.vopet-word-segment:hover {
-  background: #e3f2fd;
-  color: #1976d2;
-  transform: translateY(-1px);
+.vopet-papago-link:hover {
+  background: var(--vopet-accent-primary) !important;
+  border-color: var(--vopet-accent-primary) !important;
+  color: #fff !important;
 }
 
-.vopet-word-segment:active {
-  background: #bbdefb;
-  transform: translateY(0);
+/* 저장 버튼 */
+.vopet-save-to-file-btn {
+  background: var(--vopet-bg-tertiary) !important;
+  color: var(--vopet-text-primary) !important;
+  border: 1px solid var(--vopet-border-primary) !important;
+  padding: 6px 12px !important;
+  font-size: 11px !important;
+  border-radius: var(--vopet-radius-sm) !important;
+  cursor: pointer !important;
+  font-weight: 500 !important;
+  transition: all 0.15s !important;
+  font-family: var(--vopet-font) !important;
 }
 
-.vopet-word-segment:focus {
-  outline: 2px solid #1976d2;
-  outline-offset: 2px;
+.vopet-save-to-file-btn:hover:not(:disabled) {
+  background: var(--vopet-success) !important;
+  border-color: var(--vopet-success) !important;
+  color: #000 !important;
 }
 
-/* 단어 번역 툴팁 스타일 */
+.vopet-save-to-file-btn:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* 단어 툴팁 */
 #vopet-word-tooltip {
-  background: #333333;
-  color: #ffffff;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  animation: vopet-tooltip-fadeIn 0.2s ease-out;
-  pointer-events: none;
-  max-width: 200px;
-  word-wrap: break-word;
-}
-
-.vopet-tooltip-content {
-  text-align: center;
-  font-weight: 500;
+  background: var(--vopet-bg-secondary) !important;
+  color: var(--vopet-text-primary) !important;
+  padding: 8px 12px !important;
+  border-radius: var(--vopet-radius-md) !important;
+  font-size: 13px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid var(--vopet-border-primary) !important;
+  animation: vopet-tooltip-fadeIn 0.15s ease-out !important;
+  pointer-events: none !important;
+  max-width: 220px !important;
 }
 
 @keyframes vopet-tooltip-fadeIn {
   from {
     opacity: 0;
-    transform: translateY(5px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -285,75 +182,136 @@
   }
 }
 
-/* 툴팁 화살표 (선택사항) */
 #vopet-word-tooltip::after {
   content: '';
   position: absolute;
-  bottom: -6px;
+  bottom: -5px;
   left: 50%;
   transform: translateX(-50%);
   width: 0;
   height: 0;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 6px solid #333333;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid var(--vopet-bg-secondary);
 }
 
-.vopet-click-hint {
-  font-size: 12px;
-  color: #666666;
-  font-style: italic;
+/* 단어 세그먼트 (클릭 가능한 단어) */
+.vopet-word-segment {
+  display: inline-block;
+  cursor: pointer;
+  padding: 2px 4px;
+  margin: 0 1px;
+  border-radius: var(--vopet-radius-sm);
+  transition: all 0.15s;
+  position: relative;
 }
 
-.vopet-error {
-  color: #ff6b6b;
-  font-size: 14px;
-  text-align: center;
+.vopet-word-segment:hover {
+  background: var(--vopet-accent-subtle);
+  color: var(--vopet-accent-hover);
 }
 
 /* 후리가나 스타일 */
-.furigana {
-  display: block;
-  color: #666666;
-  font-size: 12px;
-  font-style: italic;
-  margin-top: 4px;
+.furigana,
+.furigana-inline {
+  display: inline-block;
+  color: var(--vopet-text-muted);
+  font-size: 10px;
+  font-style: normal;
   padding: 2px 6px;
-  background: #f8f9fa;
-  border-radius: 4px;
-  border: 1px solid #e9ecef;
+  background: var(--vopet-bg-tertiary);
+  border-radius: var(--vopet-radius-sm);
+  margin-left: 6px;
 }
 
-.vopet-translation .furigana {
-  margin-top: 6px;
-  text-align: center;
+/* 번역 결과 영역 */
+.vopet-result {
+  padding: 0;
 }
 
-/* 팝업이 화면 밖으로 나가지 않도록 조정 */
-#vopet-translation-popup {
-  position: fixed !important;
+.vopet-translation {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--vopet-text-primary);
+  line-height: 1.6;
 }
 
-/* 반응형 디자인 */
+.vopet-translation-full {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  color: var(--vopet-text-primary);
+  line-height: 1.6;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--vopet-border-primary);
+}
+
+/* 개별 단어 항목 */
+.vopet-word-item {
+  display: inline-block;
+  padding: 6px 10px;
+  background: var(--vopet-bg-tertiary);
+  border-radius: var(--vopet-radius-md);
+  border: 1px solid var(--vopet-border-primary);
+  transition: all 0.15s;
+  margin: 3px;
+}
+
+.vopet-word-item:hover {
+  background: var(--vopet-bg-hover);
+  border-color: var(--vopet-border-secondary);
+}
+
+.vopet-word-original {
+  font-weight: 600;
+  color: var(--vopet-text-primary);
+}
+
+.vopet-word-translated {
+  color: var(--vopet-accent-hover);
+  font-weight: 500;
+}
+
+.vopet-word-separator {
+  color: var(--vopet-text-muted);
+  margin: 0 6px;
+  font-size: 11px;
+}
+
+/* 저장 버튼 스타일 */
+.vopet-save-btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: var(--vopet-accent-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--vopet-radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--vopet-font);
+}
+
+.vopet-save-btn:hover:not(:disabled) {
+  background: var(--vopet-accent-hover);
+}
+
+.vopet-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 반응형 */
 @media (max-width: 400px) {
-  #vopet-translation-popup {
-    max-width: 250px;
-    min-width: 180px;
-  }
-  
-  .vopet-popup-header {
-    padding: 10px 12px;
-  }
-  
-  .vopet-popup-body {
-    padding: 12px;
-  }
-  
-  .vopet-word {
-    font-size: 14px;
-  }
-  
-  .vopet-translation {
-    font-size: 16px;
+  #vopet-translation-popup,
+  #vopet-screenshot-translation-popup {
+    max-width: 280px !important;
+    min-width: 200px !important;
   }
 }

@@ -50,7 +50,7 @@ function resetAllIcons() {
   updateMessageIcon(false);
 }
 
-// 채팅 화면 표시 함수
+// 채팅 화면 표시 함수 - Cursor-style Dark Theme
 function showChatScreen(contentArea) {
   // 기존 내용 제거
   contentArea.innerHTML = '';
@@ -62,10 +62,11 @@ function showChatScreen(contentArea) {
     height: 100%;
     display: flex;
     flex-direction: column;
-    font-family: Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     overflow-y: auto;
-    padding: 10px;
+    padding: 16px;
     box-sizing: border-box;
+    background: #1e1e1e;
   `;
   
   // 제목 영역 (제목 + 삭제 버튼)
@@ -74,17 +75,17 @@ function showChatScreen(contentArea) {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #3c3c3c;
   `;
   
   const title = document.createElement('div');
-  title.textContent = '번역 기록';
+  title.textContent = '🐾 번역 기록';
   title.style.cssText = `
-    font-size: 18px;
-    font-weight: bold;
-    color: #333;
+    font-size: 16px;
+    font-weight: 600;
+    color: #e0e0e0;
   `;
   
   // 삭제 버튼
@@ -92,23 +93,26 @@ function showChatScreen(contentArea) {
   deleteButton.textContent = '전체 삭제';
   deleteButton.style.cssText = `
     padding: 6px 12px;
-    border: 1px solid #ddd;
+    border: 1px solid #3c3c3c;
     border-radius: 4px;
-    font-size: 12px;
-    background: white;
-    color: #666;
+    font-size: 11px;
+    background: #2d2d2d;
+    color: #a0a0a0;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s;
+    font-family: inherit;
   `;
   
   deleteButton.addEventListener('mouseenter', function() {
-    this.style.background = '#f5f5f5';
-    this.style.borderColor = '#bbb';
+    this.style.background = '#f14c4c';
+    this.style.borderColor = '#f14c4c';
+    this.style.color = '#fff';
   });
   
   deleteButton.addEventListener('mouseleave', function() {
-    this.style.background = 'white';
-    this.style.borderColor = '#ddd';
+    this.style.background = '#2d2d2d';
+    this.style.borderColor = '#3c3c3c';
+    this.style.color = '#a0a0a0';
   });
   
   deleteButton.addEventListener('click', function() {
@@ -120,9 +124,9 @@ function showChatScreen(contentArea) {
         emptyMessage.textContent = '번역 기록이 없습니다.';
         emptyMessage.style.cssText = `
           text-align: center;
-          color: #999;
+          color: #6e6e6e;
           padding: 40px 20px;
-          font-size: 14px;
+          font-size: 13px;
         `;
         translationsList.appendChild(emptyMessage);
       });
@@ -139,7 +143,7 @@ function showChatScreen(contentArea) {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
   `;
   
   chatContainer.appendChild(titleContainer);
@@ -150,7 +154,7 @@ function showChatScreen(contentArea) {
   loadTranslations(translationsList);
 }
 
-// 번역 기록 불러오기 함수 (전역 접근 가능)
+// 번역 기록 불러오기 함수 (전역 접근 가능) - Cursor-style
 function loadTranslations(container) {
   chrome.storage.local.get(['translations'], function(result) {
     const translations = result.translations || [];
@@ -160,9 +164,9 @@ function loadTranslations(container) {
       emptyMessage.textContent = '번역 기록이 없습니다.';
       emptyMessage.style.cssText = `
         text-align: center;
-        color: #999;
+        color: #6e6e6e;
         padding: 40px 20px;
-        font-size: 14px;
+        font-size: 13px;
       `;
       container.appendChild(emptyMessage);
       return;
@@ -174,15 +178,24 @@ function loadTranslations(container) {
     sortedTranslations.forEach((item, index) => {
       const translationItem = document.createElement('div');
       translationItem.style.cssText = `
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
+        background: #252526;
+        border: 1px solid #3c3c3c;
+        border-radius: 6px;
         padding: 12px;
         display: flex;
         flex-direction: column;
         gap: 8px;
         position: relative;
+        transition: border-color 0.15s;
       `;
+      
+      translationItem.addEventListener('mouseenter', function() {
+        this.style.borderColor = '#454545';
+      });
+      
+      translationItem.addEventListener('mouseleave', function() {
+        this.style.borderColor = '#3c3c3c';
+      });
       
       // 버튼 컨테이너 (우측 상단)
       const buttonContainer = document.createElement('div');
@@ -195,30 +208,31 @@ function loadTranslations(container) {
         align-items: center;
       `;
       
-      // 파파고 버튼
+      // 파파고 버튼 - Cursor-style
       const papagoButton = document.createElement('button');
-      papagoButton.textContent = '파파고';
+      papagoButton.textContent = '🌐 파파고';
       papagoButton.style.cssText = `
         padding: 4px 8px;
-        border: 1px solid #ddd;
+        border: 1px solid #3c3c3c;
         border-radius: 4px;
-        background: white;
-        color: #666;
-        font-size: 11px;
+        background: #2d2d2d;
+        color: #a0a0a0;
+        font-size: 10px;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.15s;
+        font-family: inherit;
       `;
       
       papagoButton.addEventListener('mouseenter', function() {
-        this.style.background = '#e3f2fd';
-        this.style.borderColor = '#2196f3';
-        this.style.color = '#2196f3';
+        this.style.background = '#0078d4';
+        this.style.borderColor = '#0078d4';
+        this.style.color = '#fff';
       });
       
       papagoButton.addEventListener('mouseleave', function() {
-        this.style.background = 'white';
-        this.style.borderColor = '#ddd';
-        this.style.color = '#666';
+        this.style.background = '#2d2d2d';
+        this.style.borderColor = '#3c3c3c';
+        this.style.color = '#a0a0a0';
       });
       
       papagoButton.addEventListener('click', function(e) {
@@ -255,16 +269,16 @@ function loadTranslations(container) {
         }
       });
       
-      // 삭제 버튼
+      // 삭제 버튼 - Cursor-style
       const deleteItemButton = document.createElement('button');
-      deleteItemButton.innerHTML = '×';
+      deleteItemButton.innerHTML = '✕';
       deleteItemButton.style.cssText = `
-        width: 24px;
-        height: 24px;
+        width: 22px;
+        height: 22px;
         border: none;
         background: transparent;
-        color: #999;
-        font-size: 20px;
+        color: #6e6e6e;
+        font-size: 12px;
         cursor: pointer;
         line-height: 1;
         padding: 0;
@@ -272,17 +286,17 @@ function loadTranslations(container) {
         align-items: center;
         justify-content: center;
         border-radius: 4px;
-        transition: all 0.2s ease;
+        transition: all 0.15s;
       `;
       
       deleteItemButton.addEventListener('mouseenter', function() {
-        this.style.background = '#ffebee';
-        this.style.color = '#f44336';
+        this.style.background = 'rgba(241, 76, 76, 0.15)';
+        this.style.color = '#f14c4c';
       });
       
       deleteItemButton.addEventListener('mouseleave', function() {
         this.style.background = 'transparent';
-        this.style.color = '#999';
+        this.style.color = '#6e6e6e';
       });
       
       deleteItemButton.addEventListener('click', function(e) {
@@ -307,22 +321,22 @@ function loadTranslations(container) {
       buttonContainer.appendChild(papagoButton);
       buttonContainer.appendChild(deleteItemButton);
       
-      // 원본 텍스트
+      // 원본 텍스트 - Cursor-style
       const originalText = document.createElement('div');
       originalText.textContent = item.original || '';
       originalText.style.cssText = `
-        font-size: 14px;
-        color: #666;
+        font-size: 12px;
+        color: #a0a0a0;
         font-weight: 500;
         padding-right: 100px;
       `;
       
-      // 번역 텍스트
+      // 번역 텍스트 - Cursor-style
       const translatedText = document.createElement('div');
       translatedText.textContent = item.translated || '';
       translatedText.style.cssText = `
-        font-size: 16px;
-        color: #333;
+        font-size: 14px;
+        color: #e0e0e0;
         font-weight: 600;
         padding-right: 100px;
       `;
@@ -369,27 +383,33 @@ function showSettingsScreen(contentArea) {
   // 설정 아이콘 활성화
   updateSettingsIcon(true);
   
-  // 설정 화면 컨테이너
+  // 설정 화면 컨테이너 - Cursor-style Dark Theme
   const settingsContainer = document.createElement('div');
   settingsContainer.style.cssText = `
     width: 100%;
     height: 100%;
+    background: #1e1e1e;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow-y: auto;
   `;
   
   // 키 변경 섹션
   const keySection = document.createElement('div');
   keySection.style.cssText = `
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   `;
   
   const keyLabel = document.createElement('label');
-  keyLabel.textContent = 'Shortcut';
+  keyLabel.textContent = 'SHORTCUT';
   keyLabel.style.cssText = `
     display: block;
-    font-size: 14px;
+    font-size: 10px;
     font-weight: 600;
     margin-bottom: 10px;
-    color: #555;
+    color: #6e6e6e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   `;
   
   // 키 선택 버튼 컨테이너
@@ -415,41 +435,42 @@ function showSettingsScreen(contentArea) {
     updateButtonStates();
   });
   
-  // 버튼 상태 업데이트 함수
+  // 버튼 상태 업데이트 함수 - Cursor-style
   function updateButtonStates() {
     keyOptions.forEach((option, index) => {
       const button = keyButtonContainer.children[index];
       if (button) {
         if (option.value === selectedKeyValue) {
-          button.style.background = '#333';
-          button.style.color = 'white';
-          button.style.borderColor = '#333';
+          button.style.background = '#0078d4';
+          button.style.color = '#fff';
+          button.style.borderColor = '#0078d4';
         } else {
-          button.style.background = 'white';
-          button.style.color = '#333';
-          button.style.borderColor = '#ddd';
+          button.style.background = '#2d2d2d';
+          button.style.color = '#a0a0a0';
+          button.style.borderColor = '#3c3c3c';
         }
       }
     });
   }
   
-  // 각 키 옵션에 대한 버튼 생성
+  // 각 키 옵션에 대한 버튼 생성 - Cursor-style
   keyOptions.forEach((option) => {
     const keyButton = document.createElement('button');
     keyButton.textContent = option.label;
     keyButton.style.cssText = `
-      padding: 6px 10px;
-      border: 1px solid #ddd;
+      padding: 6px 12px;
+      border: 1px solid #3c3c3c;
       border-radius: 4px;
       font-size: 11px;
-      background: white;
-      color: #333;
+      background: #2d2d2d;
+      color: #a0a0a0;
       cursor: pointer;
       box-sizing: border-box;
       text-align: center;
-      transition: all 0.2s ease;
+      transition: all 0.15s;
       font-weight: 500;
       white-space: nowrap;
+      font-family: inherit;
     `;
     
     // 버튼 클릭 이벤트
@@ -460,19 +481,20 @@ function showSettingsScreen(contentArea) {
       chrome.storage.sync.set({ modifierKey: option.value }, function() {
         updateButtonStates();
         
-        // 저장 성공 메시지
+        // 저장 성공 메시지 - Cursor-style
         const saveMsg = document.createElement('div');
-        saveMsg.textContent = '저장되었습니다!';
+        saveMsg.textContent = '✓ 저장되었습니다';
         saveMsg.style.cssText = `
           position: absolute;
           top: 10px;
           left: 50%;
           transform: translateX(-50%);
-          background: #4caf50;
-          color: white;
+          background: #4ec9b0;
+          color: #000;
           padding: 8px 16px;
           border-radius: 4px;
           font-size: 12px;
+          font-weight: 500;
           z-index: 1000001;
         `;
         settingsContainer.appendChild(saveMsg);
@@ -482,17 +504,17 @@ function showSettingsScreen(contentArea) {
       });
     });
     
-    // 호버 효과
+    // 호버 효과 - Cursor-style
     keyButton.addEventListener('mouseenter', function() {
       if (option.value !== selectedKeyValue) {
-        this.style.background = '#f5f5f5';
-        this.style.borderColor = '#bbb';
+        this.style.background = '#3c3c3c';
+        this.style.borderColor = '#454545';
       }
     });
     keyButton.addEventListener('mouseleave', function() {
       if (option.value !== selectedKeyValue) {
-        this.style.background = 'white';
-        this.style.borderColor = '#ddd';
+        this.style.background = '#2d2d2d';
+        this.style.borderColor = '#3c3c3c';
       }
     });
     
@@ -505,20 +527,22 @@ function showSettingsScreen(contentArea) {
   keySection.appendChild(keyLabel);
   keySection.appendChild(keyButtonContainer);
   
-  // OCR 언어 섹션
+  // OCR 언어 섹션 - Cursor-style
   const ocrLanguageSection = document.createElement('div');
   ocrLanguageSection.style.cssText = `
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   `;
   
   const ocrLanguageLabel = document.createElement('label');
-  ocrLanguageLabel.textContent = 'OCR 언어 (화면 캡처 번역)';
+  ocrLanguageLabel.textContent = 'OCR 언어';
   ocrLanguageLabel.style.cssText = `
     display: block;
-    font-size: 14px;
+    font-size: 10px;
     font-weight: 600;
     margin-bottom: 10px;
-    color: #555;
+    color: #6e6e6e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   `;
   
   // OCR 언어 버튼 컨테이너
@@ -544,19 +568,19 @@ function showSettingsScreen(contentArea) {
     updateOCRLanguageButtonStates();
   });
   
-  // OCR 언어 버튼 상태 업데이트 함수
+  // OCR 언어 버튼 상태 업데이트 함수 - Cursor-style
   function updateOCRLanguageButtonStates() {
     ocrLanguageOptions.forEach((option, index) => {
       const button = ocrLanguageButtonContainer.children[index];
       if (button) {
         if (option.value === selectedOCRLanguageValue) {
-          button.style.background = '#333';
-          button.style.color = 'white';
-          button.style.borderColor = '#333';
+          button.style.background = '#0078d4';
+          button.style.color = '#fff';
+          button.style.borderColor = '#0078d4';
         } else {
-          button.style.background = 'white';
-          button.style.color = '#333';
-          button.style.borderColor = '#ddd';
+          button.style.background = '#2d2d2d';
+          button.style.color = '#a0a0a0';
+          button.style.borderColor = '#3c3c3c';
         }
       }
     });
@@ -1334,9 +1358,10 @@ function createSpeechBubble(iconElement) {
     right: 10px;
     width: 1000px;
     height: 500px;
-    background: white;
+    background: #1e1e1e;
+    border: 1px solid #3c3c3c;
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     z-index: 1000000;
     animation: slideUpFromDog 0.4s ease;
     overflow: visible;
@@ -1350,11 +1375,11 @@ function createSpeechBubble(iconElement) {
     right: 30px;
     width: 0;
     height: 0;
-    border-top: 25px solid white;
+    border-top: 25px solid #1e1e1e;
     border-right: 25px solid transparent;
     border-left: 0;
     border-bottom: 0;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
     z-index: 1000001;
   `;
   
@@ -1365,18 +1390,19 @@ function createSpeechBubble(iconElement) {
     height: 100%;
     display: flex;
     flex-direction: column;
-    font-family: Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   `;
   
-  // 하단 아이콘 바
+  // 하단 아이콘 바 - Cursor-style Dark Theme
   const iconBar = document.createElement('div');
   iconBar.style.cssText = `
     display: flex;
     justify-content: space-evenly;
     align-items: center;
     padding: 15px 0;
-    border-top: 1px solid #e0e0e0;
-    background: #f8f9fa;
+    border-top: 1px solid #3c3c3c;
+    background: #252526;
+    border-radius: 0 0 12px 12px;
   `;
   
   // 홈 아이콘
@@ -1426,16 +1452,17 @@ function createSpeechBubble(iconElement) {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        font-family: Arial, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
         gap: 20px;
+        background: #1e1e1e;
       `;
       
       const versionText = document.createElement('div');
-      versionText.textContent = 'Vopet Ver 1.0 Beta';
+      versionText.textContent = '🐾 VoPet Ver 1.0 Beta';
       versionText.style.cssText = `
         font-size: 24px;
-        font-weight: bold;
-        color: #1C1C1B;
+        font-weight: 600;
+        color: #e0e0e0;
         text-align: center;
       `;
       
@@ -1443,16 +1470,16 @@ function createSpeechBubble(iconElement) {
       updatedText.textContent = 'updated 2025.12.26';
       updatedText.style.cssText = `
         font-size: 12px;
-        color: #999;
+        color: #6e6e6e;
         text-align: center;
       `;
       
       const helloText = document.createElement('div');
       helloText.textContent = 'cmd(ctrl) 키를 누른 상태에서 웹 사이트에서 단어를 드래그 해보세요!';
       helloText.style.cssText = `
-        font-size: 16px;
-        font-weight: bold;
-        color: #1C1C1B;
+        font-size: 14px;
+        font-weight: 500;
+        color: #a0a0a0;
         text-align: center;
         line-height: 1.5;
       `;
@@ -1667,6 +1694,8 @@ function createSpeechBubble(iconElement) {
 }
 
 // 우측 하단에 Lottie 애니메이션 아이콘 추가 (계속 표시)
+// 강아지 아이콘 출력 기능 주석처리 (popup.html로 이동)
+/*
 function createLottieIcon() {
   // 외부 컨테이너 (애니메이션 표시용)
   const bottomRightIcon = document.createElement('div');
@@ -1782,4 +1811,5 @@ window.addEventListener('load', function() {
     }
   }, 500);
 });
+*/
 

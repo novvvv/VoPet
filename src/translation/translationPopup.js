@@ -1,4 +1,25 @@
-// 번역 팝업 공통 함수
+// 번역 팝업 공통 함수 - Cursor-style Dark Theme
+
+// 디자인 토큰
+const VOPET_THEME = {
+  bgPrimary: '#1e1e1e',
+  bgSecondary: '#252526',
+  bgTertiary: '#2d2d2d',
+  bgHover: '#3c3c3c',
+  textPrimary: '#e0e0e0',
+  textSecondary: '#a0a0a0',
+  textMuted: '#6e6e6e',
+  borderPrimary: '#3c3c3c',
+  borderSecondary: '#454545',
+  accentPrimary: '#0078d4',
+  accentHover: '#1a8cff',
+  success: '#4ec9b0',
+  error: '#f14c4c',
+  radiusSm: '4px',
+  radiusMd: '6px',
+  radiusLg: '8px',
+  font: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif"
+};
 
 /**
  * HTML 이스케이프 함수
@@ -24,21 +45,11 @@ function getPapagoLang(lang) {
 }
 
 /**
- * 번역 팝업 표시 (공통 함수)
- * 
- * @param {string} originalText - 원문 텍스트
- * @param {string|null} translatedText - 번역 텍스트 (null 가능)
- * @param {string} sourceLang - 원문 언어 코드
- * @param {string} targetLanguage - 타겟 언어 코드
- * @param {string|null} furigana - 후리가나 (null 가능)
- * @param {string} popupId - 팝업 ID (기본값: 'vopet-translation-popup')
- * @param {string|Object} position - 위치 설정 ('center' 또는 {x, y} 객체, 기본값: 'center')
- * @returns {HTMLElement} 생성된 팝업 요소
+ * 번역 팝업 표시 (공통 함수) - Cursor-style Dark Theme
  */
 function showTranslationPopup(originalText, translatedText, sourceLang, targetLanguage, furigana = null, popupId = 'vopet-translation-popup', position = 'center') {
   // 기존 팝업 제거
   document.getElementById(popupId)?.remove();
-  // 다른 번역 팝업도 제거 (충돌 방지)
   document.getElementById('vopet-translation-popup')?.remove();
   document.getElementById('vopet-screenshot-translation-popup')?.remove();
   
@@ -48,47 +59,33 @@ function showTranslationPopup(originalText, translatedText, sourceLang, targetLa
   // 위치 설정
   let positionStyle = '';
   if (position === 'center') {
-    positionStyle = `
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-    `;
+    positionStyle = `left: 50%; top: 50%; transform: translate(-50%, -50%);`;
   } else if (typeof position === 'object' && position.x !== undefined && position.y !== undefined) {
-    // 마우스 위치 기반
     let x = position.x;
     let y = position.y;
-    
-    // 화면 밖으로 나가지 않도록 조정
     if (x > window.innerWidth - 420) x = window.innerWidth - 440;
     if (x < 20) x = 20;
     if (y < 100) y = 100;
     if (y > window.innerHeight - 200) y = window.innerHeight - 220;
-    
-    positionStyle = `
-      left: ${x}px;
-      top: ${y - 100}px;
-    `;
+    positionStyle = `left: ${x}px; top: ${y - 100}px;`;
   } else {
-    // 기본값: 중앙
-    positionStyle = `
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-    `;
+    positionStyle = `left: 50%; top: 50%; transform: translate(-50%, -50%);`;
   }
   
   popup.style.cssText = `
     position: fixed;
     ${positionStyle}
-    background: #fff;
-    border: 2px solid #000;
+    background: ${VOPET_THEME.bgPrimary};
+    border: 1px solid ${VOPET_THEME.borderPrimary};
+    border-radius: ${VOPET_THEME.radiusLg};
     z-index: 2147483647;
     max-width: 420px;
     width: 90%;
     max-height: 80vh;
     overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    font-family: ${VOPET_THEME.font};
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    color: ${VOPET_THEME.textPrimary};
   `;
   
   const hasTranslation = translatedText !== null && translatedText.trim().length > 0;
@@ -98,101 +95,108 @@ function showTranslationPopup(originalText, translatedText, sourceLang, targetLa
   const papagoTargetLang = getPapagoLang(targetLanguage);
   const papagoUrl = `https://papago.naver.com/?sk=${papagoSourceLang}&tk=${papagoTargetLang}&hn=0&st=${encodeURIComponent(originalText)}`;
   
+  // 공통 버튼 스타일
+  const buttonStyle = `
+    background: ${VOPET_THEME.bgTertiary};
+    color: ${VOPET_THEME.textPrimary};
+    border: 1px solid ${VOPET_THEME.borderPrimary};
+    padding: 6px 12px;
+    font-size: 11px;
+    border-radius: ${VOPET_THEME.radiusSm};
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.15s;
+    font-family: ${VOPET_THEME.font};
+  `;
+  
+  // 라벨 스타일
+  const labelStyle = `
+    font-size: 10px;
+    color: ${VOPET_THEME.textMuted};
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  `;
+  
+  // 텍스트 박스 스타일
+  const textBoxStyle = `
+    font-size: 14px;
+    line-height: 1.7;
+    color: ${VOPET_THEME.textPrimary};
+    white-space: pre-wrap;
+    background: ${VOPET_THEME.bgSecondary};
+    padding: 12px 14px;
+    border-radius: ${VOPET_THEME.radiusMd};
+    border-left: 3px solid ${VOPET_THEME.accentPrimary};
+  `;
+  
   let popupHTML = '';
   if (hasTranslation) {
+    // 원문
+    popupHTML = `
+      <div style="margin-bottom: 16px;">
+        <div style="${labelStyle}">원문</div>
+        <div style="${textBoxStyle}">${escapeHtml(originalText)}</div>
+      </div>
+    `;
+    
+    // 후리가나 (있는 경우)
     if (cleanFurigana) {
-      popupHTML = `
-        <div style="margin-bottom: 20px;">
-          <div style="font-size: 11px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">원문</div>
-          <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-left: 3px solid #000;">${escapeHtml(originalText)}</div>
-        </div>
-        <div style="margin-bottom: 20px;">
-          <div style="font-size: 11px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">후리가나</div>
-          <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f0f8ff; padding: 12px; border-left: 3px solid #4169e1;">${escapeHtml(cleanFurigana)}</div>
-        </div>
-        <div style="padding-top: 20px; border-top: 1px solid #e0e0e0;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">번역</div>
-            <div style="display: flex; gap: 6px;">
-              <a href="${papagoUrl}" target="_blank" class="vopet-papago-link" style="
-                background: #fff;
-                color: #000;
-                border: 1px solid #000;
-                padding: 6px 12px;
-                font-size: 11px;
-                border-radius: 0;
-                text-decoration: none;
-                font-weight: 500;
-                transition: background 0.2s;
-                display: inline-block;
-              ">파파고</a>
-              <button class="vopet-save-to-file-btn" data-word="${escapeHtml(originalText)}" data-translation="${escapeHtml(translatedText)}" data-furigana="${escapeHtml(cleanFurigana)}" style="
-                background: #fff;
-                color: #000;
-                border: 1px solid #000;
-                padding: 6px 12px;
-                font-size: 11px;
-                border-radius: 0;
-                cursor: pointer;
-                font-weight: 500;
-                transition: background 0.2s;
-              ">💾 CSV 저장</button>
-            </div>
-          </div>
-          <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-left: 3px solid #000;">${escapeHtml(translatedText)}</div>
-        </div>
-      `;
-    } else {
-      popupHTML = `
-        <div style="margin-bottom: 20px;">
-          <div style="font-size: 11px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">원문</div>
-          <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-left: 3px solid #000;">${escapeHtml(originalText)}</div>
-        </div>
-        <div style="padding-top: 20px; border-top: 1px solid #e0e0e0;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">번역</div>
-            <div style="display: flex; gap: 6px;">
-              <a href="${papagoUrl}" target="_blank" class="vopet-papago-link" style="
-                background: #fff;
-                color: #000;
-                border: 1px solid #000;
-                padding: 6px 12px;
-                font-size: 11px;
-                border-radius: 0;
-                text-decoration: none;
-                font-weight: 500;
-                transition: background 0.2s;
-                display: inline-block;
-              ">파파고</a>
-              <button class="vopet-save-to-file-btn" data-word="${escapeHtml(originalText)}" data-translation="${escapeHtml(translatedText)}" data-furigana="" style="
-                background: #fff;
-                color: #000;
-                border: 1px solid #000;
-                padding: 6px 12px;
-                font-size: 11px;
-                border-radius: 0;
-                cursor: pointer;
-                font-weight: 500;
-                transition: background 0.2s;
-              ">💾 CSV 저장</button>
-            </div>
-          </div>
-          <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-left: 3px solid #000;">${escapeHtml(translatedText)}</div>
+      popupHTML += `
+        <div style="margin-bottom: 16px;">
+          <div style="${labelStyle}">후리가나</div>
+          <div style="${textBoxStyle} border-left-color: ${VOPET_THEME.success};">${escapeHtml(cleanFurigana)}</div>
         </div>
       `;
     }
+    
+    // 번역
+    popupHTML += `
+      <div style="padding-top: 16px; border-top: 1px solid ${VOPET_THEME.borderPrimary};">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div style="${labelStyle} margin-bottom: 0;">번역</div>
+          <div style="display: flex; gap: 6px;">
+            <a href="${papagoUrl}" target="_blank" class="vopet-papago-link" style="${buttonStyle} text-decoration: none; display: inline-flex; align-items: center;">
+              <span style="font-size: 10px; margin-right: 4px;">🌐</span> 파파고
+            </a>
+            <button class="vopet-save-to-file-btn" data-word="${escapeHtml(originalText)}" data-translation="${escapeHtml(translatedText)}" data-furigana="${escapeHtml(cleanFurigana)}" style="${buttonStyle}">
+              💾 CSV 저장
+            </button>
+          </div>
+        </div>
+        <div style="${textBoxStyle}">${escapeHtml(translatedText)}</div>
+      </div>
+    `;
   } else {
     popupHTML = `
-      <div style="font-size: 15px; line-height: 1.7; color: #000; white-space: pre-wrap;">${escapeHtml(originalText)}</div>
+      <div style="${textBoxStyle}">${escapeHtml(originalText)}</div>
     `;
   }
   
   popup.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 2px solid #000; background: #000; color: #fff;">
-      <span style="font-size: 13px; font-weight: 600;">번역</span>
-      <button class="vopet-close-btn" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #fff;">×</button>
+    <div style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid ${VOPET_THEME.borderPrimary};
+      background: ${VOPET_THEME.bgSecondary};
+    ">
+      <span style="font-size: 13px; font-weight: 600; color: ${VOPET_THEME.textPrimary};">🐾 번역</span>
+      <button class="vopet-close-btn" style="
+        background: transparent;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+        color: ${VOPET_THEME.textSecondary};
+        padding: 4px 8px;
+        border-radius: ${VOPET_THEME.radiusSm};
+        transition: all 0.15s;
+        line-height: 1;
+      ">✕</button>
     </div>
-    <div style="padding: 20px; max-height: 60vh; overflow-y: auto;">
+    <div style="padding: 16px; max-height: 60vh; overflow-y: auto;">
       ${popupHTML}
     </div>
   `;
@@ -202,47 +206,56 @@ function showTranslationPopup(originalText, translatedText, sourceLang, targetLa
   // 닫기 버튼 이벤트
   const closeBtn = popup.querySelector('.vopet-close-btn');
   if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      popup.remove();
+    closeBtn.addEventListener('mouseenter', function() {
+      this.style.background = VOPET_THEME.bgHover;
+      this.style.color = VOPET_THEME.textPrimary;
     });
+    closeBtn.addEventListener('mouseleave', function() {
+      this.style.background = 'transparent';
+      this.style.color = VOPET_THEME.textSecondary;
+    });
+    closeBtn.addEventListener('click', () => popup.remove());
   }
   
   // ESC 키로 팝업 닫기
-  document.addEventListener('keydown', function esc(e) {
+  const escHandler = (e) => {
     if (e.key === 'Escape' && document.getElementById(popupId)) {
       popup.remove();
-      document.removeEventListener('keydown', esc);
+      document.removeEventListener('keydown', escHandler);
     }
-  });
+  };
+  document.addEventListener('keydown', escHandler);
   
-  // 파파고 링크 호버 효과 (번역이 있을 때만)
+  // 파파고 링크 호버 효과
   if (hasTranslation) {
     const papagoLink = popup.querySelector('.vopet-papago-link');
     if (papagoLink) {
       papagoLink.addEventListener('mouseenter', function() {
-        this.style.background = '#e3f2fd';
-        this.style.borderColor = '#2196f3';
-        this.style.color = '#2196f3';
+        this.style.background = VOPET_THEME.accentPrimary;
+        this.style.borderColor = VOPET_THEME.accentPrimary;
+        this.style.color = '#fff';
       });
       papagoLink.addEventListener('mouseleave', function() {
-        this.style.background = '#fff';
-        this.style.borderColor = '#000';
-        this.style.color = '#000';
+        this.style.background = VOPET_THEME.bgTertiary;
+        this.style.borderColor = VOPET_THEME.borderPrimary;
+        this.style.color = VOPET_THEME.textPrimary;
       });
     }
   }
   
-  // CSV 저장 버튼 이벤트 (번역이 있을 때만)
+  // CSV 저장 버튼 이벤트
   if (hasTranslation) {
     const saveButton = popup.querySelector('.vopet-save-to-file-btn');
     if (saveButton) {
       saveButton.addEventListener('mouseenter', function() {
-        this.style.background = '#000';
-        this.style.color = '#fff';
+        this.style.background = VOPET_THEME.success;
+        this.style.borderColor = VOPET_THEME.success;
+        this.style.color = '#000';
       });
       saveButton.addEventListener('mouseleave', function() {
-        this.style.background = '#fff';
-        this.style.color = '#000';
+        this.style.background = VOPET_THEME.bgTertiary;
+        this.style.borderColor = VOPET_THEME.borderPrimary;
+        this.style.color = VOPET_THEME.textPrimary;
       });
       
       saveButton.addEventListener('click', function(e) {
@@ -253,41 +266,29 @@ function showTranslationPopup(originalText, translatedText, sourceLang, targetLa
         const translation = this.getAttribute('data-translation');
         const furigana = this.getAttribute('data-furigana') || '';
         
-        console.log('CSV 저장 버튼 클릭:', { word, translation, furigana });
-        
-        // 저장 전 확인 팝업 표시
         if (typeof window.showSaveConfirmPopup === 'function') {
           window.showSaveConfirmPopup(word, translation, furigana, saveButton);
         } else {
-          // fallback: 직접 저장 (showSaveConfirmPopup이 없는 경우)
-          console.warn('showSaveConfirmPopup 함수를 찾을 수 없습니다. 직접 저장합니다.');
+          console.warn('showSaveConfirmPopup 함수를 찾을 수 없습니다.');
           saveButton.disabled = true;
           saveButton.textContent = '저장 중...';
-          saveButton.style.background = '#6c757d';
           
           const timeoutId = setTimeout(() => {
-            console.warn('저장 타임아웃 - 버튼 복구');
             saveButton.disabled = false;
             saveButton.textContent = '💾 CSV 저장';
-            saveButton.style.background = '#fff';
-            saveButton.style.color = '#000';
-            alert('저장이 시간 초과되었습니다. 다시 시도해주세요.');
+            alert('저장이 시간 초과되었습니다.');
           }, 10000);
           
-          // executeSave 함수 호출 (translationSidebar.js에 있음)
           if (typeof window.executeSave === 'function') {
             window.executeSave(word, translation, furigana, saveButton);
             clearTimeout(timeoutId);
           } else if (typeof saveToCSV === 'function') {
-            // screenshotTranslation.js의 saveToCSV 함수 사용
             saveToCSV(word, translation, furigana, saveButton, timeoutId);
           } else {
-            alert('저장 기능이 준비되지 않았습니다. 페이지를 새로고침해주세요.');
+            alert('저장 기능이 준비되지 않았습니다.');
             clearTimeout(timeoutId);
             saveButton.disabled = false;
             saveButton.textContent = '💾 CSV 저장';
-            saveButton.style.background = '#fff';
-            saveButton.style.color = '#000';
           }
         }
       });
@@ -301,5 +302,5 @@ function showTranslationPopup(originalText, translatedText, sourceLang, targetLa
 if (typeof window !== 'undefined') {
   window.showTranslationPopup = showTranslationPopup;
   window.escapeHtml = escapeHtml;
+  window.VOPET_THEME = VOPET_THEME;
 }
-

@@ -3,42 +3,96 @@
 <head>
   <meta charset="utf-8">
   <style>
+    :root {
+      /* Cursor-style Dark Theme */
+      --bg-primary: #1e1e1e;
+      --bg-secondary: #252526;
+      --bg-tertiary: #2d2d2d;
+      --bg-hover: #3c3c3c;
+      --bg-active: #094771;
+      
+      --text-primary: #e0e0e0;
+      --text-secondary: #a0a0a0;
+      --text-muted: #6e6e6e;
+      
+      --border-primary: #3c3c3c;
+      --border-secondary: #454545;
+      
+      --accent-primary: #0078d4;
+      --accent-hover: #1a8cff;
+      --accent-subtle: rgba(0, 120, 212, 0.15);
+      
+      --success: #4ec9b0;
+      --warning: #dcdcaa;
+      --error: #f14c4c;
+      
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      
+      --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
     body {
-      width: 350px;
-      padding: 20px;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      width: 400px;
+      padding: 0;
       margin: 0;
-      background: #ffffff;
-      color: #333333;
+      font-family: var(--font-family);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    
+    .container {
+      padding: 20px;
     }
     
     .header {
       text-align: center;
-      margin-bottom: 20px;
+      padding: 24px 20px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-primary);
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
     
     .header h1 {
       margin: 0;
-      font-size: 24px;
-      font-weight: 300;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      color: var(--text-primary);
     }
     
     .header p {
-      margin: 5px 0 0 0;
-      font-size: 14px;
-      opacity: 0.8;
+      margin: 6px 0 0 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+    
+    .logo-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+      display: block;
     }
     
     .settings {
-      background: #f8f9fa;
-      border: 1px solid #e9ecef;
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 15px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 16px;
     }
     
     .setting-item {
-      margin-bottom: 15px;
+      margin-bottom: 20px;
     }
     
     .setting-item:last-child {
@@ -47,115 +101,362 @@
     
     .setting-item label {
       display: block;
-      margin-bottom: 5px;
-      font-size: 14px;
-      font-weight: 500;
+      margin-bottom: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     
     .setting-item select,
-    .setting-item input {
+    .setting-item input[type="text"] {
       width: 100%;
-      padding: 8px 12px;
-      border: 1px solid #dee2e6;
-      border-radius: 6px;
-      background: #ffffff;
-      color: #333;
-      font-size: 14px;
+      padding: 10px 12px;
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: var(--font-family);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    
+    .setting-item select:hover,
+    .setting-item input[type="text"]:hover {
+      border-color: var(--border-secondary);
     }
     
     .setting-item select:focus,
-    .setting-item input:focus {
-      outline: none;
-      border-color: #007bff;
-      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    .setting-item input[type="text"]:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 2px var(--accent-subtle);
+    }
+    
+    .setting-item select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a0a0a0' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+    
+    .setting-item select option {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+    
+    .setting-item small {
+      display: block;
+      margin-top: 8px;
+      color: var(--text-muted);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+    
+    .setting-item small a {
+      color: var(--accent-primary);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    
+    .setting-item small a:hover {
+      color: var(--accent-hover);
+      text-decoration: underline;
+    }
+    
+    /* 버튼 그룹 스타일 */
+    .button-group {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .button-group button {
+      padding: 6px 12px;
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 500;
+      white-space: nowrap;
+      font-family: var(--font-family);
+    }
+    
+    .button-group button:hover {
+      background: var(--bg-hover);
+      border-color: var(--border-secondary);
+    }
+    
+    .button-group button.active {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: #fff;
+    }
+    
+    /* 파일 연동 섹션 */
+    .file-sync-section {
+      margin-top: 20px;
+      padding: 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg);
+    }
+    
+    .file-info {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      padding: 10px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-primary);
+      line-height: 1.5;
+    }
+    
+    .file-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .file-buttons button {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--font-family);
+    }
+    
+    .file-select-btn {
+      background: var(--accent-primary);
+      color: #fff;
+      border-color: var(--accent-primary);
+    }
+    
+    .file-select-btn:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+    
+    .file-disconnect-btn {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+    
+    .file-disconnect-btn:hover {
+      background: var(--error);
+      color: #fff;
+      border-color: var(--error);
     }
     
     .status {
       text-align: center;
-      padding: 10px;
-      background: #f8f9fa;
-      border: 1px solid #e9ecef;
-      border-radius: 6px;
-      font-size: 14px;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
     }
     
     .status.active {
-      background: #d4edda;
-      border-color: #c3e6cb;
-      color: #155724;
+      background: rgba(78, 201, 176, 0.1);
+      border-color: rgba(78, 201, 176, 0.3);
+      color: var(--success);
+    }
+    
+    .status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
     
     .instructions {
-      background: #f8f9fa;
-      border: 1px solid #e9ecef;
-      border-radius: 6px;
-      padding: 15px;
-      font-size: 13px;
-      line-height: 1.4;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      font-size: 12px;
+      line-height: 1.6;
     }
     
     .instructions h3 {
-      margin: 0 0 10px 0;
-      font-size: 14px;
+      margin: 0 0 12px 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     
     .instructions ul {
       margin: 0;
-      padding-left: 20px;
+      padding-left: 0;
+      list-style: none;
     }
     
     .instructions li {
-      margin-bottom: 5px;
+      margin-bottom: 8px;
+      padding-left: 20px;
+      position: relative;
+      color: var(--text-secondary);
+    }
+    
+    .instructions li:last-child {
+      margin-bottom: 0;
+    }
+    
+    .instructions li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--accent-primary);
+    }
+    
+    .kbd {
+      display: inline-block;
+      padding: 2px 6px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-sm);
+      font-family: 'SF Mono', Monaco, Consolas, monospace;
+      font-size: 11px;
+      color: var(--text-primary);
+    }
+    
+    .save-message {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--success);
+      color: #000;
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      font-weight: 500;
+      z-index: 1000;
+      animation: fadeInOut 2s;
+    }
+    
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+      10%, 90% { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>🐾 VoPet</h1>
+    <span class="logo-icon">🐾</span>
+    <h1>VoPet</h1>
     <p>단어 해석기</p>
   </div>
   
-  <div class="settings">
-    <div class="setting-item">
-      <label for="language">해석 언어:</label>
-      <select id="language">
-        <option value="ko">한국어</option>
-        <option value="en">English</option>
-        <option value="ja">日本語</option>
-        <option value="zh">中文</option>
-      </select>
+  <div class="container">
+    <!-- Shortcut 설정 -->
+    <div class="settings">
+      <div class="setting-item">
+        <label>SHORTCUT</label>
+        <div class="button-group" id="shortcut-buttons">
+          <button data-value="meta">cmd(ctrl)</button>
+          <button data-value="alt">option(alt)</button>
+          <button data-value="meta+alt">cmd(ctrl) + option(alt)</button>
+        </div>
+      </div>
     </div>
     
-    <div class="setting-item">
-      <label for="translatorService">번역 서비스:</label>
-      <select id="translatorService">
-        <option value="google-free">Google Translate (무료, API 키 불필요) ⭐</option>
-        <option value="deepl">DeepL (API 키 필요, 월 50만 자 무료)</option>
-        <option value="google">Google Translate (유료, API 키 필요)</option>
-      </select>
+    <!-- OCR 언어 설정 -->
+    <div class="settings">
+      <div class="setting-item">
+        <label>OCR 언어</label>
+        <div class="button-group" id="ocr-language-buttons">
+          <button data-value="eng">English</button>
+          <button data-value="jpn">日本語</button>
+          <button data-value="kor">한국어</button>
+        </div>
+      </div>
     </div>
     
-    <div class="setting-item">
-      <label for="apiKey">API 키:</label>
-      <input type="text" id="apiKey" placeholder="DeepL 또는 Google Translate API 키를 입력하세요">
-      <small style="display: block; margin-top: 5px; color: #666; font-size: 12px;">
-        <strong>참고:</strong> Google Translate (무료)는 API 키 불필요합니다.<br>
-        DeepL 사용 시: <a href="https://www.deepl.com/pro-api" target="_blank" style="color: #007bff;">무료 API 키 발급</a> 필요 (월 50만 자 무료)
-      </small>
+    <!-- 해석 언어 설정 -->
+    <div class="settings">
+      <div class="setting-item">
+        <label>해석 언어</label>
+        <div class="button-group" id="language-buttons">
+          <button data-value="ko">한국어</button>
+          <button data-value="en">English</button>
+          <button data-value="ja">日本語</button>
+          <button data-value="zh">中文</button>
+        </div>
+      </div>
     </div>
-  </div>
-  
-  <div class="status" id="status">
-    활성화됨 - 단어를 드래그해보세요!
-  </div>
-  
-  <div class="instructions">
-    <h3>사용법:</h3>
-    <ul>
-      <li>웹페이지에서 단어를 드래그하세요</li>
-      <li>작은 팝업이 나타나 단어를 해석해드립니다</li>
-      <li>팝업을 클릭하면 더 자세한 정보를 볼 수 있습니다</li>
-    </ul>
+    
+    <!-- 번역 서비스 설정 -->
+    <div class="settings">
+      <div class="setting-item">
+        <label for="translatorService">번역 서비스</label>
+        <select id="translatorService">
+          <option value="google-free">Google Translate (무료) ⭐</option>
+          <option value="deepl">DeepL (API 키 필요)</option>
+          <option value="google">Google Translate (유료)</option>
+        </select>
+      </div>
+      
+      <div class="setting-item">
+        <label for="apiKey">API 키</label>
+        <input type="text" id="apiKey" placeholder="API 키를 입력하세요 (무료 버전은 불필요)">
+        <small id="apiKeyHelp">
+          Google Translate (무료)는 API 키가 필요 없습니다.<br>
+          DeepL 사용 시: <a href="https://www.deepl.com/pro-api" target="_blank">무료 API 키 발급</a>
+        </small>
+      </div>
+    </div>
+    
+    <!-- CSV 파일 연동 -->
+    <div class="file-sync-section">
+      <div class="setting-item">
+        <label>CSV 파일 연동</label>
+        <div class="file-info" id="fileInfo">
+          연동된 파일이 없습니다
+        </div>
+        <div class="file-buttons">
+          <button class="file-select-btn" id="fileSelectBtn">파일 선택</button>
+          <button class="file-disconnect-btn" id="fileDisconnectBtn" style="display: none;">연결 해제</button>
+        </div>
+        <input type="file" id="fileInput" accept=".csv" style="display: none;">
+      </div>
+    </div>
+    
+    <div class="status active" id="status">
+      <span class="status-dot"></span>활성화됨 — 단어를 드래그해보세요
+    </div>
+    
+    <div class="instructions">
+      <h3>사용법</h3>
+      <ul>
+        <li>웹페이지에서 단어를 드래그하세요</li>
+        <li>스크린샷 번역: <span class="kbd">⌘</span> + <span class="kbd">⇧</span> + <span class="kbd">V</span></li>
+        <li>팝업을 클릭하면 상세 정보를 볼 수 있습니다</li>
+      </ul>
+    </div>
   </div>
   
   <script src="popup.js"></script>

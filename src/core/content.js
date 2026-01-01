@@ -1413,95 +1413,76 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 
 // 번역 기록을 Chat에 저장하는 함수 (중복 방지)
 let lastSavedTranslation = null;
-let saveTranslationTimeout = null;
+let isSavingTranslation = false;
 
 function saveTranslationToChat(original, translated, targetLanguage, translatorService, sourceLanguage, furigana = '') {
   try {
-    // 중복 저장 방지: 같은 번역이 연속으로 들어오는 경우 무시
-    const translationKey = `${original}_${translated}_${Date.now()}`;
+    // 저장 중이면 무시
+    if (isSavingTranslation) {
+      return;
+    }
     
-    // 마지막 저장과 비교 (1초 이내 같은 번역이면 무시)
+    // 마지막 저장과 비교 (3초 이내 같은 번역이면 무시)
     if (lastSavedTranslation && 
         lastSavedTranslation.original === original && 
         lastSavedTranslation.translated === translated &&
-        Date.now() - lastSavedTranslation.timestamp < 1000) {
-      return; // 중복 저장 방지
+        Date.now() - lastSavedTranslation.timestamp < 3000) {
+      return;
     }
     
-    // 타임아웃으로 중복 호출 방지
-    if (saveTranslationTimeout) {
-      clearTimeout(saveTranslationTimeout);
-    }
+    // 저장 시작
+    isSavingTranslation = true;
     
-    saveTranslationTimeout = setTimeout(function() {
-      // 현재 시간 생성
-      const now = new Date();
-      const timestamp = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    // 현재 시간 생성
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    
+    // furigana에서 대괄호 제거
+    const cleanFurigana = furigana ? furigana.replace(/^\[|\]$/g, '') : '';
+    
+    // 번역 기록 객체 생성
+    const translationRecord = {
+      original: original,
+      translated: translated,
+      sourceLanguage: sourceLanguage || detectLanguage(original),
+      targetLanguage: targetLanguage || 'ko',
+      translatorService: translatorService || 'google-free',
+      furigana: cleanFurigana,
+      timestamp: timestamp
+    };
+    
+    // 기존 번역 기록 불러오기
+    chrome.storage.local.get(['translations'], function(result) {
+      const translations = result.translations || [];
       
-      // furigana에서 대괄호 제거
-      const cleanFurigana = furigana ? furigana.replace(/^\[|\]$/g, '') : '';
+      // 중복 체크: 같은 원본과 번역이 이미 있는지 확인
+      const isDuplicate = translations.some(t => 
+        t.original === original && t.translated === translated
+      );
       
-      // 번역 기록 객체 생성
-      const translationRecord = {
-        original: original,
-        translated: translated,
-        sourceLanguage: sourceLanguage || detectLanguage(original),
-        targetLanguage: targetLanguage || 'ko',
-        translatorService: translatorService || 'google-free',
-        furigana: cleanFurigana,
-        timestamp: timestamp
-      };
-      
-      // 마지막 저장 기록 업데이트
-      lastSavedTranslation = {
-        original: original,
-        translated: translated,
-        timestamp: Date.now()
-      };
-      
-      // 기존 번역 기록 불러오기
-      chrome.storage.local.get(['translations'], function(result) {
-        const translations = result.translations || [];
-        
-        // 중복 체크: 같은 원본과 번역이 이미 있는지 확인
-        const isDuplicate = translations.some(t => 
-          t.original === original && t.translated === translated
-        );
-        
-        if (!isDuplicate) {
-          // 새 번역 기록 추가 (최대 100개까지만 저장)
-          translations.push(translationRecord);
-          if (translations.length > 100) {
-            translations.shift(); // 가장 오래된 기록 제거
-          }
-          
-          // 저장
-          chrome.storage.local.set({ translations: translations }, function() {
-            // Chat 화면이 열려있으면 업데이트
-            const chatList = document.getElementById('chat-translations-list');
-            if (chatList) {
-              // 기존 내용 제거하고 다시 로드
-              chatList.innerHTML = '';
-              if (typeof loadTranslations === 'function') {
-                loadTranslations(chatList);
-              } else if (typeof window.loadTranslations === 'function') {
-                window.loadTranslations(chatList);
-              }
-            }
-            // 사이드바도 업데이트
-            const sidebarList = document.getElementById('vopet-sidebar-translations-list');
-            if (sidebarList && typeof loadSidebarTranslations === 'function') {
-              sidebarList.innerHTML = '';
-              loadSidebarTranslations(sidebarList);
-            } else if (sidebarList && typeof window.loadSidebarTranslations === 'function') {
-              sidebarList.innerHTML = '';
-              window.loadSidebarTranslations(sidebarList);
-            }
-          });
+      if (!isDuplicate) {
+        // 새 번역 기록 추가 (최대 100개까지만 저장)
+        translations.push(translationRecord);
+        if (translations.length > 100) {
+          translations.shift();
         }
-      });
-    }, 100); // 100ms 지연으로 중복 호출 방지
+        
+        // 저장 (UI 업데이트는 chrome.storage.onChanged 리스너에서 처리)
+        chrome.storage.local.set({ translations: translations }, function() {
+          // 저장 성공 후 마지막 저장 기록 업데이트
+          lastSavedTranslation = {
+            original: original,
+            translated: translated,
+            timestamp: Date.now()
+          };
+          isSavingTranslation = false;
+        });
+      } else {
+        isSavingTranslation = false;
+      }
+    });
   } catch (error) {
     console.error('번역 기록 저장 오류:', error);
+    isSavingTranslation = false;
   }
 }

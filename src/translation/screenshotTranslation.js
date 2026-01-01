@@ -664,10 +664,29 @@ function saveToCSV(word, translation, furigana, saveButton, timeoutId) {
 }
 
 /**
- * 스크린샷 번역 기록 저장
+ * 스크린샷 번역 기록 저장 (중복 방지)
  */
+let lastScreenshotSave = null;
+let isSavingScreenshot = false;
+
 function saveScreenshotTranslationToChat(original, translated, targetLanguage, sourceLanguage, furigana = '') {
   try {
+    // 저장 중이면 무시
+    if (isSavingScreenshot) {
+      return;
+    }
+    
+    // 마지막 저장과 비교 (3초 이내 같은 번역이면 무시)
+    if (lastScreenshotSave && 
+        lastScreenshotSave.original === original && 
+        lastScreenshotSave.translated === translated &&
+        Date.now() - lastScreenshotSave.timestamp < 3000) {
+      return;
+    }
+    
+    // 저장 시작
+    isSavingScreenshot = true;
+    
     // 현재 시간 생성
     const now = new Date();
     const timestamp = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -696,36 +715,26 @@ function saveScreenshotTranslationToChat(original, translated, targetLanguage, s
         // 새 번역 기록 추가 (최대 100개까지만 저장)
         translations.push(translationRecord);
         if (translations.length > 100) {
-          translations.shift(); // 가장 오래된 기록 제거
+          translations.shift();
         }
         
-        // 저장
+        // 저장 (UI 업데이트는 chrome.storage.onChanged 리스너에서 처리)
         chrome.storage.local.set({ translations: translations }, function() {
-          // Chat 화면이 열려있으면 업데이트
-          const chatList = document.getElementById('chat-translations-list');
-          if (chatList) {
-            // 기존 내용 제거하고 다시 로드
-            chatList.innerHTML = '';
-            if (typeof loadTranslations === 'function') {
-              loadTranslations(chatList);
-            } else if (typeof window.loadTranslations === 'function') {
-              window.loadTranslations(chatList);
-            }
-          }
-          // 사이드바도 업데이트
-          const sidebarList = document.getElementById('vopet-sidebar-translations-list');
-          if (sidebarList && typeof loadSidebarTranslations === 'function') {
-            sidebarList.innerHTML = '';
-            loadSidebarTranslations(sidebarList);
-          } else if (sidebarList && typeof window.loadSidebarTranslations === 'function') {
-            sidebarList.innerHTML = '';
-            window.loadSidebarTranslations(sidebarList);
-          }
+          // 저장 성공 후 마지막 저장 기록 업데이트
+          lastScreenshotSave = {
+            original: original,
+            translated: translated,
+            timestamp: Date.now()
+          };
+          isSavingScreenshot = false;
         });
+      } else {
+        isSavingScreenshot = false;
       }
     });
   } catch (error) {
     console.error('스크린샷 번역 기록 저장 오류:', error);
+    isSavingScreenshot = false;
   }
 }
 
