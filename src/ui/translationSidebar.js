@@ -4,6 +4,8 @@ let translationSidebar = null;
 let isSidebarExpanded = false; // 기본값: 닫힌 상태
 let sidebarOpacity = 0.95; // 기본 투명도
 const SIDEBAR_WIDTH = 350;
+let currentPage = 1; // 현재 페이지
+const ITEMS_PER_PAGE = 5; // 페이지당 항목 수
 
 /**
  * 번역 기록 사이드바 생성
@@ -65,7 +67,7 @@ function createTranslationSidebar() {
   `;
 
   const title = document.createElement('div');
-  title.textContent = '🐾 번역 기록';
+  title.textContent = 'Log';
   title.style.cssText = `
     font-size: 14px;
     font-weight: 600;
@@ -81,7 +83,7 @@ function createTranslationSidebar() {
 
   // 전체 삭제 버튼 - Cursor-style
   const deleteAllButton = document.createElement('button');
-  deleteAllButton.textContent = '전체 삭제';
+  deleteAllButton.textContent = 'Delete All';
   deleteAllButton.style.cssText = `
     background: #2d2d2d;
     border: 1px solid #3c3c3c;
@@ -107,10 +109,13 @@ function createTranslationSidebar() {
   deleteAllButton.addEventListener('click', function() {
     if (confirm('모든 번역 기록을 삭제하시겠습니까?')) {
       chrome.storage.local.set({ translations: [] }, function() {
+        currentPage = 1; // 페이지 리셋
         const listContainer = document.getElementById('vopet-sidebar-translations-list');
         if (listContainer) {
           listContainer.innerHTML = '';
           showEmptyMessage(listContainer);
+          updatePaginationInfo(0, 0);
+          updatePaginationButtons(1, 0);
         }
       });
     }
@@ -176,6 +181,143 @@ function createTranslationSidebar() {
   opacityControl.appendChild(opacitySlider);
   opacityControl.appendChild(opacityValue);
 
+  // 페이지네이션 컨트롤 영역 - Cursor-style
+  const paginationControl = document.createElement('div');
+  paginationControl.id = 'vopet-sidebar-pagination';
+  paginationControl.style.cssText = `
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 16px;
+    background: #252526;
+    border-bottom: 1px solid #3c3c3c;
+    flex-shrink: 0;
+  `;
+
+  const paginationInfo = document.createElement('span');
+  paginationInfo.id = 'vopet-pagination-info';
+  paginationInfo.style.cssText = `
+    font-size: 11px;
+    color: #6e6e6e;
+    white-space: nowrap;
+  `;
+
+  const paginationButtons = document.createElement('div');
+  paginationButtons.style.cssText = `
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  `;
+
+  // 이전 페이지 버튼
+  const prevButton = document.createElement('button');
+  prevButton.id = 'vopet-pagination-prev';
+  prevButton.textContent = '‹';
+  prevButton.style.cssText = `
+    width: 24px;
+    height: 24px;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    background: #2d2d2d;
+    color: #a0a0a0;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    font-family: inherit;
+    padding: 0;
+  `;
+
+  prevButton.addEventListener('mouseenter', function() {
+    if (!this.disabled) {
+      this.style.background = '#3c3c3c';
+      this.style.borderColor = '#505050';
+      this.style.color = '#e0e0e0';
+    }
+  });
+
+  prevButton.addEventListener('mouseleave', function() {
+    if (!this.disabled) {
+      this.style.background = '#2d2d2d';
+      this.style.borderColor = '#3c3c3c';
+      this.style.color = '#a0a0a0';
+    }
+  });
+
+  prevButton.addEventListener('click', function() {
+    if (!this.disabled && currentPage > 1) {
+      currentPage--;
+      const listContainer = document.getElementById('vopet-sidebar-translations-list');
+      if (listContainer) {
+        listContainer.innerHTML = '';
+        loadSidebarTranslations(listContainer);
+      }
+    }
+  });
+
+  // 다음 페이지 버튼
+  const nextButton = document.createElement('button');
+  nextButton.id = 'vopet-pagination-next';
+  nextButton.textContent = '›';
+  nextButton.style.cssText = `
+    width: 24px;
+    height: 24px;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    background: #2d2d2d;
+    color: #a0a0a0;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    font-family: inherit;
+    padding: 0;
+  `;
+
+  nextButton.addEventListener('mouseenter', function() {
+    if (!this.disabled) {
+      this.style.background = '#3c3c3c';
+      this.style.borderColor = '#505050';
+      this.style.color = '#e0e0e0';
+    }
+  });
+
+  nextButton.addEventListener('mouseleave', function() {
+    if (!this.disabled) {
+      this.style.background = '#2d2d2d';
+      this.style.borderColor = '#3c3c3c';
+      this.style.color = '#a0a0a0';
+    }
+  });
+
+  nextButton.addEventListener('click', function() {
+    if (!this.disabled) {
+      chrome.storage.local.get(['translations'], function(result) {
+        const translations = result.translations || [];
+        const totalPages = Math.ceil(translations.length / ITEMS_PER_PAGE);
+        if (currentPage < totalPages) {
+          currentPage++;
+          const listContainer = document.getElementById('vopet-sidebar-translations-list');
+          if (listContainer) {
+            listContainer.innerHTML = '';
+            loadSidebarTranslations(listContainer);
+          }
+        }
+      });
+    }
+  });
+
+  paginationButtons.appendChild(prevButton);
+  paginationButtons.appendChild(nextButton);
+
+  paginationControl.appendChild(paginationInfo);
+  paginationControl.appendChild(paginationButtons);
+
   // 번역 기록 리스트 컨테이너 - Cursor-style
   const listContainer = document.createElement('div');
   listContainer.id = 'vopet-sidebar-translations-list';
@@ -191,6 +333,7 @@ function createTranslationSidebar() {
 
   sidebar.appendChild(header);
   sidebar.appendChild(opacityControl);
+  sidebar.appendChild(paginationControl);
   sidebar.appendChild(listContainer);
   document.body.appendChild(sidebar);
 
@@ -210,6 +353,11 @@ function createTranslationSidebar() {
   // 번역 저장 시 업데이트 리스너
   chrome.storage.onChanged.addListener(function(changes, areaName) {
     if (areaName === 'local' && changes.translations) {
+      // 새 항목이 추가되면 첫 페이지로 이동
+      const newTranslations = changes.translations.newValue || [];
+      if (newTranslations.length > 0 && newTranslations.length > (changes.translations.oldValue || []).length) {
+        currentPage = 1;
+      }
       listContainer.innerHTML = '';
       loadSidebarTranslations(listContainer);
     }
@@ -730,7 +878,51 @@ function executeSave(word, translation, furigana, saveButton) {
 }
 
 /**
- * 사이드바 번역 기록 로드
+ * 페이지네이션 정보 업데이트
+ */
+function updatePaginationInfo(currentPageNum, totalPagesNum, totalItems = 0) {
+  const paginationInfo = document.getElementById('vopet-pagination-info');
+  if (paginationInfo) {
+    if (totalItems === 0) {
+      paginationInfo.textContent = '0개 항목';
+    } else {
+      paginationInfo.textContent = `페이지 ${currentPageNum} / ${totalPagesNum} (총 ${totalItems}개)`;
+    }
+  }
+}
+
+/**
+ * 페이지네이션 버튼 상태 업데이트
+ */
+function updatePaginationButtons(currentPageNum, totalPagesNum) {
+  const prevButton = document.getElementById('vopet-pagination-prev');
+  const nextButton = document.getElementById('vopet-pagination-next');
+  
+  if (prevButton) {
+    prevButton.disabled = currentPageNum <= 1;
+    if (prevButton.disabled) {
+      prevButton.style.opacity = '0.4';
+      prevButton.style.cursor = 'not-allowed';
+    } else {
+      prevButton.style.opacity = '1';
+      prevButton.style.cursor = 'pointer';
+    }
+  }
+  
+  if (nextButton) {
+    nextButton.disabled = currentPageNum >= totalPagesNum || totalPagesNum === 0;
+    if (nextButton.disabled) {
+      nextButton.style.opacity = '0.4';
+      nextButton.style.cursor = 'not-allowed';
+    } else {
+      nextButton.style.opacity = '1';
+      nextButton.style.cursor = 'pointer';
+    }
+  }
+}
+
+/**
+ * 사이드바 번역 기록 로드 (페이지네이션 적용)
  */
 function loadSidebarTranslations(container) {
   chrome.storage.local.get(['translations'], function(result) {
@@ -738,13 +930,45 @@ function loadSidebarTranslations(container) {
     
     if (translations.length === 0) {
       showEmptyMessage(container);
+      // 페이지네이션 정보 업데이트
+      updatePaginationInfo(0, 0);
       return;
     }
     
     // 최신순으로 정렬 (최신이 위)
     const sortedTranslations = translations.slice().reverse();
     
-    sortedTranslations.forEach((item, index) => {
+    // 페이지네이션 계산
+    const totalItems = sortedTranslations.length;
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+    
+    // 현재 페이지가 범위를 벗어나면 마지막 페이지로 조정
+    if (currentPage > totalPages && totalPages > 0) {
+      currentPage = totalPages;
+    }
+    if (currentPage < 1) {
+      currentPage = 1;
+    }
+    
+    // 현재 페이지에 해당하는 항목만 추출
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const currentPageItems = sortedTranslations.slice(startIndex, endIndex);
+    
+    // 페이지네이션 정보 업데이트
+    updatePaginationInfo(currentPage, totalPages, totalItems);
+    
+    // 페이지네이션 버튼 상태 업데이트
+    updatePaginationButtons(currentPage, totalPages);
+    
+    if (currentPageItems.length === 0) {
+      showEmptyMessage(container);
+      return;
+    }
+    
+    currentPageItems.forEach((item, pageIndex) => {
+      // 전체 배열에서의 실제 인덱스 계산 (삭제 버튼용)
+      const actualIndex = startIndex + pageIndex;
       const translationItem = document.createElement('div');
       translationItem.style.cssText = `
         background: #252526;
@@ -803,10 +1027,18 @@ function loadSidebarTranslations(container) {
         e.stopPropagation();
         chrome.storage.local.get(['translations'], function(result) {
           const translations = result.translations || [];
-          const originalIndex = translations.length - 1 - index;
+          // 실제 인덱스 계산 (최신순이므로 역순)
+          const originalIndex = translations.length - 1 - actualIndex;
           translations.splice(originalIndex, 1);
           
           chrome.storage.local.set({ translations: translations }, function() {
+            // 삭제 후 현재 페이지가 비어있으면 이전 페이지로 이동
+            const remainingItems = translations.length;
+            const newTotalPages = Math.ceil(remainingItems / ITEMS_PER_PAGE);
+            if (currentPage > newTotalPages && newTotalPages > 0) {
+              currentPage = newTotalPages;
+            }
+            
             container.innerHTML = '';
             loadSidebarTranslations(container);
           });
