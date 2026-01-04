@@ -178,9 +178,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const { word, translation, furigana = '' } = request;
     
     console.log('파일에 단어 저장 요청 받음:', { word, translation, furigana });
-    console.log('sender:', sender);
     
-    // 비동기 처리
+    // 비동기 처리 - sendResponse 직접 사용
     (async () => {
       try {
         // 저장된 파일 정보 가져오기
@@ -190,23 +189,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           });
         });
         
-        console.log('파일 데이터:', fileData);
-        
         if (!fileData.syncedFileName) {
-          sendResponseToContentScript({ success: false, error: '연동된 파일이 없습니다' });
+          sendResponse({ success: false, error: '연동된 파일이 없습니다' });
           return;
         }
         
         // Numbers 파일인 경우
         if (fileData.syncedFileName.endsWith('.numbers')) {
-          sendResponseToContentScript({ success: false, error: 'Numbers 파일은 CSV로 내보낸 후 사용해주세요' });
+          sendResponse({ success: false, error: 'Numbers 파일은 CSV로 내보낸 후 사용해주세요' });
           return;
         }
         
         // CSV 파일인 경우
         if (fileData.syncedFileName.endsWith('.csv')) {
           if (!fileData.syncedFileContent) {
-            sendResponseToContentScript({ success: false, error: '파일 내용을 읽을 수 없습니다. 파일을 다시 선택해주세요.' });
+            sendResponse({ success: false, error: '파일 내용을 읽을 수 없습니다. 파일을 다시 선택해주세요.' });
             return;
           }
           
@@ -218,12 +215,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           let header = '';
           
           if (lines.length > 0) {
-            // 첫 줄이 헤더인지 확인 (순서, 단어, 뜻 등의 키워드 포함)
             const firstLine = lines[0].toLowerCase();
             if (firstLine.includes('순서') || firstLine.includes('단어') || firstLine.includes('뜻') || firstLine.includes('발음') || firstLine.includes('후리가나')) {
               hasHeader = true;
               header = lines[0];
-              // 기존 헤더에 발음 컬럼이 없으면 추가
               if (!firstLine.includes('발음') && !firstLine.includes('후리가나')) {
                 const headerParts = header.split(',');
                 if (headerParts.length === 3) {
@@ -234,20 +229,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             }
           }
           
-          // 기존 데이터 라인 가져오기
           const dataLines = lines.slice(hasHeader ? 1 : 0).filter(line => line.trim());
           
-          // 헤더가 없으면 추가
           if (!hasHeader) {
             header = '순서,단어,발음,뜻';
           }
           
-          // 기존 데이터가 3컬럼 형식이면 발음 컬럼 추가 필요
+          // 기존 데이터가 3컬럼 형식이면 발음 컬럼 추가
           if (dataLines.length > 0) {
             const firstDataLine = dataLines[0].trim();
             const fields = firstDataLine.match(/("(?:[^"]|"")*"|[^,]+)(?=\s*,|\s*$)/g);
             if (fields && fields.length === 3) {
-              // 기존이 3컬럼이면 모든 데이터에 빈 발음 컬럼 추가
               dataLines.forEach((line, index) => {
                 const lineFields = line.match(/("(?:[^"]|"")*"|[^,]+)(?=\s*,|\s*$)/g);
                 if (lineFields && lineFields.length === 3) {
@@ -270,122 +262,41 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           const newLineNumber = maxNumber + 1;
           const newLine = `${newLineNumber},"${escapeCsvField(word)}","${escapeCsvField(furigana)}","${escapeCsvField(translation)}"`;
           
-          // CSV 재구성 (헤더 + 데이터 + 새 라인)
           dataLines.push(newLine);
           csvContent = header + '\n' + dataLines.join('\n');
           
-          console.log('CSV 내용 업데이트 완료, 라인 수:', csvContent.split('\n').length);
-          
-          // 파일 내용 업데이트
-          chrome.storage.local.set({ syncedFileContent: csvContent }, function() {
-            // 다운로드 가능하도록 파일 생성
-            const BOM = '\uFEFF';
-            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            
-            console.log('파일 다운로드 URL 생성:', url);
-            
-            // 다운로드 트리거 (content script에 메시지 전송)
-            // sender.tab.id를 우선 사용, 없으면 active tab 찾기
-            const targetTabId = sender?.tab?.id;
-            
-            if (targetTabId) {
-              console.log('sender.tab.id 사용:', targetTabId);
-              sendDownloadAndResponse(targetTabId, fileData.syncedFileName, url);
-            } else {
-              chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-                if (tabs && tabs[0]) {
-                  console.log('탭 찾음:', tabs[0].id, tabs[0].url);
-                  sendDownloadAndResponse(tabs[0].id, fileData.syncedFileName, url);
-                } else {
-                  console.error('활성 탭을 찾을 수 없습니다');
-                  sendResponseToContentScript({ success: false, error: '활성 탭을 찾을 수 없습니다' });
-                }
-              });
-            }
-            
-            // 다운로드 및 응답 전송 헬퍼 함수
-            function sendDownloadAndResponse(tabId, fileName, fileUrl) {
-              // 다운로드 메시지 전송
-              chrome.tabs.sendMessage(tabId, {
-                action: 'downloadUpdatedFile',
-                fileName: fileName,
-                fileUrl: fileUrl
-              }, function(downloadResponse) {
-                if (chrome.runtime.lastError) {
-                  console.error('다운로드 메시지 전송 오류:', chrome.runtime.lastError);
-                } else {
-                  console.log('다운로드 메시지 전송 성공');
-                }
-              });
-              
-              // 응답 전송 (여러 번 시도)
-              let retryCount = 0;
-              const maxRetries = 5;
-              
-              const sendResponseMessage = () => {
-                chrome.tabs.sendMessage(tabId, {
-                  action: 'saveWordToFileResponse',
-                  success: true,
-                  message: '파일에 저장되었습니다'
-                }, function(response) {
-                  if (chrome.runtime.lastError) {
-                    console.error(`응답 메시지 전송 오류 (시도 ${retryCount + 1}/${maxRetries}):`, chrome.runtime.lastError);
-                    retryCount++;
-                    if (retryCount < maxRetries) {
-                      // 500ms 후 재시도
-                      setTimeout(sendResponseMessage, 500);
-                    } else {
-                      console.error('응답 전송 최대 재시도 횟수 초과');
-                    }
-                  } else {
-                    console.log('응답 전송 성공');
-                  }
-                });
-              };
-              
-              sendResponseMessage();
-            }
+          // 파일 내용 업데이트 후 즉시 응답
+          await new Promise((resolve) => {
+            chrome.storage.local.set({ syncedFileContent: csvContent }, resolve);
           });
+          
+          // 다운로드 트리거 (선택적)
+          const BOM = '\uFEFF';
+          const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          
+          const targetTabId = sender?.tab?.id;
+          if (targetTabId) {
+            chrome.tabs.sendMessage(targetTabId, {
+              action: 'downloadUpdatedFile',
+              fileName: fileData.syncedFileName,
+              fileUrl: url
+            });
+          }
+          
+          // 성공 응답 - 즉시 전송
+          sendResponse({ success: true, message: '파일에 저장되었습니다' });
         } else {
-          sendResponseToContentScript({ success: false, error: '지원하지 않는 파일 형식입니다. CSV 파일만 지원됩니다.' });
+          sendResponse({ success: false, error: '지원하지 않는 파일 형식입니다. CSV 파일만 지원됩니다.' });
         }
       } catch (error) {
         console.error('파일 저장 오류:', error);
-        sendResponseToContentScript({ success: false, error: error.message || '알 수 없는 오류' });
+        sendResponse({ success: false, error: error.message || '알 수 없는 오류' });
       }
     })();
     
     // 비동기 응답을 위해 true 반환
     return true;
-  }
-  
-  // Content script에 응답 전송 헬퍼 함수
-  function sendResponseToContentScript(responseData) {
-    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-      if (tabs && tabs[0]) {
-        console.log('응답 전송:', responseData);
-        chrome.tabs.sendMessage(tabs[0].id, {
-          action: 'saveWordToFileResponse',
-          ...responseData
-        }, function(response) {
-          if (chrome.runtime.lastError) {
-            console.error('응답 전송 오류:', chrome.runtime.lastError);
-            // 재시도
-            setTimeout(() => {
-              chrome.tabs.sendMessage(tabs[0].id, {
-                action: 'saveWordToFileResponse',
-                ...responseData
-              });
-            }, 500);
-          } else {
-            console.log('응답 전송 성공');
-          }
-        });
-      } else {
-        console.error('활성 탭을 찾을 수 없습니다');
-      }
-    });
   }
   
   // 다른 메시지에 대해서는 false 반환

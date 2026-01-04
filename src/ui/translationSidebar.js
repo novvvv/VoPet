@@ -789,8 +789,19 @@ function executeSave(word, translation, furigana, saveButton) {
         getRequest.onsuccess = async () => {
           const data = getRequest.result;
           
+          // 파일 핸들로 직접 저장 시도
           if (data && data.handle) {
             try {
+              // 권한 확인 (권한이 만료되었을 수 있음)
+              const permission = await data.handle.queryPermission({ mode: 'readwrite' });
+              if (permission !== 'granted') {
+                // 권한 재요청
+                const newPermission = await data.handle.requestPermission({ mode: 'readwrite' });
+                if (newPermission !== 'granted') {
+                  throw new Error('파일 쓰기 권한이 거부되었습니다');
+                }
+              }
+              
               const writable = await data.handle.createWritable();
               const BOM = '\uFEFF';
               const cleanCsv = csvContent.trim();
@@ -810,56 +821,51 @@ function executeSave(word, translation, furigana, saveButton) {
                 saveButton.style.color = '#e0e0e0';
                 saveButton.style.borderColor = '#3c3c3c';
               }, 2000);
+              return; // 성공하면 여기서 종료
             } catch (error) {
-              console.error('파일 쓰기 오류:', error);
-              clearTimeout(timeoutId);
-              saveButton.disabled = false;
+              console.warn('파일 핸들 직접 저장 실패, background.js로 fallback:', error.message);
+              // fallback으로 background.js 사용
+            }
+          }
+          
+          // 파일 핸들이 없거나 권한 문제가 있으면 background.js에 저장 요청
+          chrome.runtime.sendMessage({
+            action: 'saveWordToFile',
+            word: word,
+            translation: translation,
+            furigana: furigana
+          }, function(response) {
+            clearTimeout(timeoutId);
+            saveButton.disabled = false;
+            
+            if (chrome.runtime.lastError) {
               saveButton.textContent = '💾 저장';
               saveButton.style.background = '#2d2d2d';
               saveButton.style.color = '#e0e0e0';
               saveButton.style.borderColor = '#3c3c3c';
-              alert('파일 저장 중 오류가 발생했습니다: ' + error.message);
+              alert('CSV 저장 중 오류가 발생했습니다: ' + chrome.runtime.lastError.message);
+              return;
             }
-          } else {
-            // 파일 핸들이 없으면 background.js에 저장 요청 (파일 다이얼로그 열기)
-            chrome.runtime.sendMessage({
-              action: 'saveWordToFile',
-              word: word,
-              translation: translation,
-              furigana: furigana
-            }, function(response) {
-              clearTimeout(timeoutId);
-              saveButton.disabled = false;
-              
-              if (chrome.runtime.lastError) {
+            
+            if (response && response.success) {
+              saveButton.textContent = '✓ 저장됨';
+              saveButton.style.background = '#4ec9b0';
+              saveButton.style.color = '#000';
+              saveButton.style.borderColor = '#4ec9b0';
+              setTimeout(() => {
                 saveButton.textContent = '💾 저장';
                 saveButton.style.background = '#2d2d2d';
                 saveButton.style.color = '#e0e0e0';
                 saveButton.style.borderColor = '#3c3c3c';
-                alert('CSV 저장 중 오류가 발생했습니다: ' + chrome.runtime.lastError.message);
-                return;
-              }
-              
-              if (response && response.success) {
-                saveButton.textContent = '✓ 저장됨';
-                saveButton.style.background = '#4ec9b0';
-                saveButton.style.color = '#000';
-                saveButton.style.borderColor = '#4ec9b0';
-                setTimeout(() => {
-                  saveButton.textContent = '💾 저장';
-                  saveButton.style.background = '#2d2d2d';
-                  saveButton.style.color = '#e0e0e0';
-                  saveButton.style.borderColor = '#3c3c3c';
-                }, 2000);
-              } else {
-                saveButton.textContent = '💾 저장';
-                saveButton.style.background = '#2d2d2d';
-                saveButton.style.color = '#e0e0e0';
-                saveButton.style.borderColor = '#3c3c3c';
-                alert('CSV 저장에 실패했습니다: ' + (response?.error || '알 수 없는 오류'));
-              }
-            });
-          }
+              }, 2000);
+            } else {
+              saveButton.textContent = '💾 저장';
+              saveButton.style.background = '#2d2d2d';
+              saveButton.style.color = '#e0e0e0';
+              saveButton.style.borderColor = '#3c3c3c';
+              alert('CSV 저장에 실패했습니다: ' + (response?.error || '알 수 없는 오류'));
+            }
+          });
         };
         
         getRequest.onerror = () => {
